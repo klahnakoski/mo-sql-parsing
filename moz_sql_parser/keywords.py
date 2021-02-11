@@ -24,6 +24,7 @@ INTERVAL = Keyword("interval", caseless=True)
 JOIN = Keyword("join", caseless=True)
 LEFT = Keyword("left", caseless=True)
 LIKE = Keyword("like", caseless=True)
+ILIKE = Keyword("ilike", caseless=True)
 LIMIT = Keyword("limit", caseless=True).suppress()
 OFFSET = Keyword("offset", caseless=True).suppress()
 ON = Keyword("on", caseless=True).suppress()
@@ -136,6 +137,7 @@ RESERVED = MatchFirst([
     LEFT_OUTER_JOIN,
     LEFT,
     LIKE,
+    ILIKE,
     LIMIT,
     NOCASE,
     NOT_BETWEEN,
@@ -214,6 +216,7 @@ precedence = {
     "nin": 8,
     "is": 8,
     "like": 8,
+    "ilike": 8,
     "not_like": 8,
     "rlike": 8,
     "not_rlike": 8,
@@ -243,6 +246,7 @@ KNOWN_OPS = [
     IS_NOT,
     IS,
     LIKE,
+    ILIKE,
     NOT_LIKE,
     RLIKE,
     NOT_RLIKE,
