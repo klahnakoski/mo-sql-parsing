@@ -196,6 +196,7 @@ binary_ops = {
     "is": "eq",
     "similar to": "similar_to",
     "not like": "not_like",
+    "not ilike": "not_ilike",
     "not rlike": "not_rlike",
     "not simlilar to": "not_similar_to",
     "or": "or",

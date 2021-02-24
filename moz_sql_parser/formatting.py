@@ -212,6 +212,9 @@ class Formatter:
     def _ilike(self, pair):
         return "{0} ILIKE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
 
+    def _not_ilike(self, pair):
+        return "{0} NOT ILIKE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
+
     def _cast(self, pair):
         return "CAST({0} AS {1})".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
 

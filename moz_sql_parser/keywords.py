@@ -93,6 +93,7 @@ WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 # COMPOUND OPERATORS
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
+NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
 NOT_IN = Group(NOT + IN).set_parser_name("nin")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
@@ -143,6 +144,7 @@ RESERVED = MatchFirst([
     NOT_BETWEEN,
     NOT_IN,
     NOT_LIKE,
+    NOT_ILIKE,
     NOT_RLIKE,
     NOT,
     NULL,
@@ -218,6 +220,7 @@ precedence = {
     "like": 8,
     "ilike": 8,
     "not_like": 8,
+    "not_ilike": 8,
     "rlike": 8,
     "not_rlike": 8,
     "similar_to": 8,
@@ -248,6 +251,7 @@ KNOWN_OPS = [
     LIKE,
     ILIKE,
     NOT_LIKE,
+    NOT_ILIKE,
     RLIKE,
     NOT_RLIKE,
     SIMILAR_TO,
