@@ -171,6 +171,9 @@ class Formatter:
 
     def value(self, json):
         parts = [self.dispatch(json["value"])]
+        if 'over' in json:
+            parts.append(self.dispatch(json["over"]))
+            print(" ".join(parts))
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
         return " ".join(parts)
@@ -227,6 +230,11 @@ class Formatter:
     def _not_rlike(self, pair):
         return "{0} NOT RLIKE {1}".format(
             self.dispatch(pair[0]), self.dispatch(pair[1])
+        )
+
+    def _partitionby(self, value):
+        return "OVER (PARTITION BY {0})".format(
+            self.dispatch(value)
         )
 
     def _is(self, pair):
