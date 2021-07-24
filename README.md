@@ -30,7 +30,7 @@ Jan 2021 -There are [almost 500 tests](https://github.com/klahnakoski/mo-sql-par
 
 ## Install
 
-    pip install mo-sql-parsing
+    pip install moz-sql-parser
 
 ## Parsing SQL
 
