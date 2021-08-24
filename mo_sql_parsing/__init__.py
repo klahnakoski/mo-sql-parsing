@@ -13,6 +13,7 @@ import json
 from threading import Lock
 
 from mo_sql_parsing.sql_parser import SQLParser, scrub_literal, scrub
+import mo_sql_parsing.json_converter import *
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 
@@ -23,6 +24,28 @@ def parse(sql):
         parse_result = SQLParser.parseString(sql, parseAll=True)
         return scrub(parse_result)
 
+
+def parse_json(sql):
+    
+    query = sql.lower()
+    
+    try : 
+        query_parsed = {}
+        query_reg = parse(query) 
+        alias = get_tables(query_reg,{})[1]
+        query_parsed['tables_from']  =  get_tables_fj(query_reg, {})[0]
+        query_parsed['tables_join']  =  get_tables_fj(query_reg, {})[1]
+        query_parsed['projections']  =  get_projections(query_reg, alias)
+        query_parsed['attributes_where']   =  get_atts_where(query_reg, alias)
+        query_parsed['attributes_groupby'] =  get_atts_group_by(query_reg, alias)
+        query_parsed['attributes_orderby'] =  get_atts_order_by(query_reg, alias)
+        query_parsed['attributes_having']  =  get_atts_having(query_reg, alias)
+        query_parsed['functions']    =  get_functions(query_reg)
+        return query_parsed
+
+    except :
+        print(query)
+        return {}
 
 def format(json, **kwargs):
     from mo_sql_parsing.formatting import Formatter
