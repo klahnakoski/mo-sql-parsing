@@ -388,7 +388,10 @@ def unquote(tokens):
 
 def to_string(tokens):
     val = tokens[0]
-    val = "'" + val[1:-1].replace("''", "\\'") + "'"
+    if val == '\'null\'':
+        val = "'$$null$$'"
+    else:
+        val = "'" + val[1:-1].replace("''", "\\'") + "'"
     return {"literal": ast.literal_eval(val)}
 
 

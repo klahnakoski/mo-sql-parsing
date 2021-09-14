@@ -26,8 +26,9 @@ def parse(sql):
 
 def format(json, **kwargs):
     from moz_sql_parser.formatting import Formatter
-
-    return Formatter(**kwargs).format(json)
+    sql = Formatter(**kwargs).format(json)
+    sql = sql.replace('$$null$$', 'null') if isinstance(sql, str) else sql
+    return sql
 
 
 _ = json.dumps
