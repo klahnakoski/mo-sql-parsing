@@ -19,7 +19,8 @@ parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 
 def parse(sql):
     with parseLocker:
-        sql = sql.rstrip().rstrip(";")
+        # Handle cases like queries of ('McDonald's | Food Folk ') to {'literal': "McDonald's | Food Folk "}
+        sql = sql.rstrip().rstrip(";").replace("'s", "''s")
         parse_result = SQLParser.parseString(sql, parseAll=True)
         return scrub(parse_result)
 
