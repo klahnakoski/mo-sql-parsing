@@ -157,6 +157,8 @@ class Formatter:
                 return self._join_on(json)
             elif "null" in json:
                 return "NULL"
+            elif "timestamptz" in json:
+                return "TIMESTAMPTZ"
             else:
                 return self.op(json)
         if isinstance(json, string_types):
