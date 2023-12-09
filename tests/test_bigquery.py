@@ -11,7 +11,7 @@ from unittest import TestCase, skip
 
 from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 
-from mo_sql_parsing import parse_bigquery as parse
+from mo_sql_parsing import parse_bigquery as parse, format
 
 
 @add_error_reporting
@@ -1588,7 +1588,6 @@ class TestBigQuery(TestCase):
         }
         self.assertEqual(result, expected)
 
-    @skip("TODO")
     def test_issue_216(self):
         sql = """
             with raw_data as (
@@ -1609,5 +1608,54 @@ class TestBigQuery(TestCase):
             left join raw_data2 on raw_data.col1 = raw_data2.col2, unnest ([raw_data2.cn1, raw_data2.cn2]) as unnested_res
         """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                "raw_data",
+                {"left join": "raw_data2", "on": {"eq": ["raw_data.col1", "raw_data2.col2"]}},
+                {"cross join": {
+                    "name": "unnested_res",
+                    "value": {"unnest": {"create_array": ["raw_data2.cn1", "raw_data2.cn2"]}},
+                }},
+            ],
+            "select": "*",
+            "with": [
+                {
+                    "name": "raw_data",
+                    "value": {
+                        "from": {"name": "col1", "value": {"unnest": {"generate_array": [1, 2]}}},
+                        "select": "*",
+                    },
+                },
+                {
+                    "name": "raw_data2",
+                    "value": {
+                        "from": {"name": "col2", "value": {"unnest": {"generate_array": [1, 2]}}},
+                        "select": ["*", {"name": "cn1", "value": 1}, {"name": "cn2", "value": 2}],
+                    },
+                },
+            ],
+        }
         self.assertEqual(result, expected)
+
+    def test_issue_216b(self):
+        sql = """
+            select 
+                *
+            from raw_data
+            left join raw_data2 as b on raw_data.col1 = b.col2, unnest ([raw_data2.cn1, raw_data2.cn2]) as unnested_res
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                "raw_data",
+                {"left join": {"name": "b", "value": "raw_data2"}, "on": {"eq": ["raw_data.col1", "b.col2"]}},
+                {"cross join": {
+                    "name": "unnested_res",
+                    "value": {"unnest": {"create_array": ["raw_data2.cn1", "raw_data2.cn2"]}},
+                }},
+            ],
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+        new_sql = format(result)
+        self.assertEqual(new_sql, """SELECT * FROM raw_data LEFT JOIN raw_data2 AS b ON raw_data.col1 = b.col2 CROSS JOIN UNNEST([raw_data2.cn1, raw_data2.cn2]) AS unnested_res""")

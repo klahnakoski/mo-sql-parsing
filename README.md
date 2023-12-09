@@ -47,6 +47,11 @@ The `SELECT` clause is an array of objects containing `name` and `value` propert
 
 There are a few parsing modes you may be interested in:
 
+#### Double-quotes for literal strings
+
+MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour, but it is more forgiving for programmers coming from other languages. A specific parse function is provided: 
+
+    result = parse_mysql(sql)
 
 #### SQLServer Identifiers (`[]`)
 
@@ -57,7 +62,6 @@ SQLServer uses square brackets to delimit identifiers. For example
 which conflicts with BigQuery array constructor (eg `[1, 2, 3, 4]`). You may use the SqlServer flavour with 
     
     from mo_sql_parsing import parse_sqlserver as parse
-
 
 #### NULL is None
 
@@ -91,16 +95,10 @@ here is the pretty-printed JSON from the example above:
 }}}
 ```
 
-#### Double-quotes for literal strings
-
-MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour, but it is more forgiving for programmers coming from other languages. A specific parse function is provided: 
-
-    result = parse_mysql(sql)
-
 
 ## Generating SQL
 
-You may also generate SQL from the a given JSON document. This is done by the formatter, which is in Alpha state (Oct2021).
+You may also generate SQL from a given JSON document. This is done by the formatter, which is in Alpha state (Oct2021).
 
     >>> from mo_sql_parsing import format
     >>> format({"from":"test", "select":["a.b", "c"]})

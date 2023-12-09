@@ -12,7 +12,7 @@ import re
 from unittest import TestCase
 
 from mo_future import get_function_name
-from mo_logs import Log
+from mo_logs import logger
 from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import format, parse
@@ -43,7 +43,7 @@ class TestFormatAndParse(TestCase):
             new_json = parse(new_sql)
             self.assertEqual(new_json, expected_json)
         except Exception as cause:
-            Log.error(
+            logger.error(
                 EXCEPTION_MESSAGE,
                 expected_sql=expected_sql,
                 expected_json=expected_json,

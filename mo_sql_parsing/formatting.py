@@ -521,6 +521,9 @@ class Formatter:
             acc.append(self.dispatch(json["using"]))
         return " ".join(acc)
 
+    def _create_array(self, json, prec):
+        return "[" + ", ".join(self.dispatch(v) for v in listwrap(json)) + "]"
+
     def ordered_query(self, json, prec):
         op = None
         if json.keys() & set(unordered_clauses) - {"from"}:
