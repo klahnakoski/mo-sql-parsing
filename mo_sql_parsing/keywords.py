@@ -146,7 +146,8 @@ VIEW = keyword("view")
 
 
 joins = (
-    (
+    Literal(",").set_parser_name("cross_join")/"cross join"
+    | (
         (
             Optional(CROSS | OUTER | INNER | NATURAL | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))) + JOIN
             | STRAIGHT_JOIN
@@ -277,6 +278,7 @@ precedence = {
     # https://www.sqlite.org/lang_expr.html
     "literal": -1,
     "nliteral": -1,
+    "create_array": -1,
     "get": 0,
     "interval": 0,
     "cast": 0,

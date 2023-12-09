@@ -11,7 +11,7 @@
 from unittest import skip
 
 from mo_files import File
-from mo_logs import Log
+from mo_logs import logger
 from mo_logs.strings import expand_template
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
@@ -43,7 +43,7 @@ class TestSimple(FuzzyTestCase):
                 try:
                     parse_result = parse(query)
                     format_result = format(parse_result)
-                    Log.note("OK: {{sql}}", sql=format_result)
+                    logger.note("OK: {{sql}}", sql=format_result)
                 except Exception:
                     acc.append(expand_template(test_template, {"sql": query, "num": count}))
                     count += 1

@@ -9,8 +9,7 @@
 
 from unittest import TestCase
 
-from mo_sql_parsing import parse as sql_parse
-from mo_sql_parsing.utils import normal_op
+from mo_sql_parsing import parse as sql_parse, normal_op
 from tests.util import assertRaises
 
 parse = lambda s: sql_parse(s, calls=normal_op)

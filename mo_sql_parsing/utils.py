@@ -10,12 +10,14 @@
 import ast
 import sys
 
-from mo_dots import is_data, is_null, Data, from_data, literal_field, unliteral_field
-from mo_future import text, number_types, binary_type, flatten, first
+from mo_dots import is_data, is_null, literal_field, unliteral_field
+from mo_future import text, number_types, binary_type, flatten
 from mo_imports import expect
 from mo_parsing import *
 from mo_parsing import whitespaces
 from mo_parsing.utils import is_number, listwrap
+
+from mo_sql_parsing import simple_op
 
 unary_ops = expect("unary_ops")
 
@@ -54,24 +56,6 @@ def flag(keywords):
 
 def assign(key: str, value: ParserElement):
     return keyword(key).suppress() + value(key.replace(" ", "_"))
-
-
-def simple_op(op, args, kwargs):
-    if args is None:
-        kwargs[op] = {}
-    else:
-        kwargs[op] = args
-    return kwargs
-
-
-def normal_op(op, args, kwargs):
-    output = Data(op=op)
-    args = listwrap(args)
-    if args and (not isinstance(args[0], dict) or args[0]):
-        output.args = args
-    if kwargs:
-        output.kwargs = kwargs
-    return from_data(output)
 
 
 scrub_op = simple_op

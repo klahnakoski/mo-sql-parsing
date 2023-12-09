@@ -2,7 +2,7 @@
     "author": "Kyle Lahnakoski",
     "author_email": "kyle@lahnakoski.com",
     "classifiers": [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: SQL",

@@ -13,7 +13,7 @@ from unittest import TestCase, skipIf
 
 from mo_files import File
 from mo_json import value2json
-from mo_logs import Log, strings
+from mo_logs import logger, strings
 from mo_math import randoms
 from mo_times import Timer
 
@@ -41,9 +41,9 @@ class TestSoQueries(TestCase):
                 new_result = parse(new_sql)
                 self.assertEqual(result, new_result)
                 if randoms.int(50) == 0:
-                    Log.info("{{data}}", data=value2json(result))
+                    logger.info("{{data}}", data=value2json(result))
             except Exception as cause:
-                Log.error("failed", cause=cause)
+                logger.error("failed", cause=cause)
 
         with Timer("parse so queries") as timer:
             results = (
@@ -56,7 +56,7 @@ class TestSoQueries(TestCase):
                 .map(careful_parse)
                 .to_list()
             )
-            Log.info(
+            logger.info(
                 "{{num}} results in {{seconds|round(1)}} seconds", num=len(results), seconds=timer.duration.seconds,
             )
 
