@@ -824,3 +824,8 @@ class TestSimple(TestCase):
         result = format(parse(sql))
         expected = """SELECT * FROM dataset_field WHERE dataset_field.id IN (NULL)"""
         self.assertEqual(result, expected)
+
+    def test_issue_220(self):
+        sql = """SELECT TO_TIMESTAMP(A DEFAULT NULL ON CONVERSION ERROR, 'DD/MM/YYYY HH24:MI:SS') FROM B.C"""
+        result = format(parse(sql))
+        self.assertEqual(result, sql)

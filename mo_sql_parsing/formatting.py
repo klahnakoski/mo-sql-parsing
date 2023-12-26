@@ -181,6 +181,8 @@ class Formatter:
                 return self._join_on(json, prec)
             elif "insert" in json:
                 return self.insert(json, prec)
+            elif "on_conversion_error" in json:
+                return self._on_conversion_error(json, prec)
             elif json.keys() & ordered_query_kwargs:
                 return self.ordered_query(json, prec)
             elif json.keys() & set(unordered_clauses):
@@ -523,6 +525,19 @@ class Formatter:
 
     def _create_array(self, json, prec):
         return "[" + ", ".join(self.dispatch(v) for v in listwrap(json)) + "]"
+
+    def _on_conversion_error(self, json, prec):
+        default = self.dispatch(json["on_conversion_error"])
+        op = json.keys() - {"on_conversion_error"}
+        if len(op) != 1:
+            raise Exception("on_conversion_error should have only one key!")
+        op = op.pop()
+        param, *rest = json[op]
+        acc = [f"{op.upper()}({self.dispatch(param)} DEFAULT {default} ON CONVERSION ERROR"]
+        for r in rest:
+            acc.append(f", {self.dispatch(r)}")
+        acc.append(")")
+        return "".join(acc)
 
     def ordered_query(self, json, prec):
         op = None
