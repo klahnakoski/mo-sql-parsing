@@ -94,6 +94,21 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             for c in ["cast", "safe_cast", "try_cast", "validate_conversion", "convert"]
         ])
 
+        oracle_casting = MatchFirst([
+            (
+                Group(
+                    Keyword(c, caseless=True)("op")
+                    + LB
+                    + expression("params")
+                    + Optional(keyword("default").suppress()+ expression("on_conversion_error") + keyword("ON CONVERSION ERROR").suppress())
+                    + Optional(comma + literal_string("params") + Optional(comma + literal_string("params")))
+                    + RB
+                )
+                / to_json_call
+            )
+            for c in ["to_date","to_number", "to_timestamp", "to_timestamp_tz", "to_yminterval", "to_dsinterval"]
+        ])
+
         substring = (
             Group(
                 keyword("substring")("op")
@@ -321,6 +336,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | case
             | switch
             | casting
+            | oracle_casting
             | substring
             | distinct
             | trim

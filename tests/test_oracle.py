@@ -59,3 +59,16 @@ class TestOracle(TestCase):
             "from": "b.c",
         }
         self.assertEqual(result, expected)
+
+    def test_issue_220(self):
+        sql = """SELECT TO_TIMESTAMP(A DEFAULT NULL ON CONVERSION ERROR, 'DD/MM/YYYY HH24:MI:SS') FROM B.C"""
+        result = parse(sql)
+        expected = {
+            "from": "B.C",
+            "select": {"value": {
+                "on_conversion_error": {"null": {}},
+                "to_timestamp": ["A", {"literal": "DD/MM/YYYY HH24:MI:SS"}],
+            }},
+        }
+        self.assertEqual(result, expected)
+
