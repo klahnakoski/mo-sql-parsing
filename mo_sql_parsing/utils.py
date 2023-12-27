@@ -628,6 +628,14 @@ def to_select_call(tokens):
         return {"name": name, "value": expr}
 
 
+def to_unpivot_column(tokens):
+    expr = tokens["value"][0]
+    name = tokens["name"]
+    if not name:
+        return expr
+    return {"name": name['literal'], "value": expr}
+
+
 def to_union_call(tokens):
     unions = tokens["union"]
     if isinstance(unions, dict):
