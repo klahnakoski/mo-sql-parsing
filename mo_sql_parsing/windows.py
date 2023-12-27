@@ -83,6 +83,7 @@ def window(expr, var_name, sort_column):
         + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
         + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
         + Optional(row_clause("range"))
+        + Optional(var_name)
         + RB
     )
 

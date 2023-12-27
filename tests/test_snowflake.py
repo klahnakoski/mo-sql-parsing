@@ -321,7 +321,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": [
                 "monthly_sales",
-                {"unpivot": {"value": "sales", "for": "month", "in": {"value": ["jan", "feb", "mar", "april"]}}},
+                {"unpivot": {"value": "sales", "for": "month", "in": ["jan", "feb", "mar", "april"]}},
             ],
             "orderby": {"value": "empid"},
             "select": "*",
@@ -952,5 +952,31 @@ class TestSnowflake(TestCase):
             "columns": [{"name": "a", "type": {"varchar": 10}}, {"name": "b", "type": {"int": {}}}],
             "name": "foo",
             "cluster_by": ["a", "b"]}
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_222(self):
+        sql = """WITH Produce AS (
+          SELECT 'Kale' as product, 51 as Q1 UNION ALL
+          SELECT 'Kale' as product, 10 UNION ALL
+          SELECT 'Apple', 77)
+        SELECT sum(Q1) OVER (item_window) AS sum_Q1
+        FROM Produce
+        WINDOW item_window AS (
+          PARTITION BY product
+          )"""
+        result = parse(sql)
+        expected = {
+            "select": {"name": "sum_Q1", "over": "item_window", "value": {"sum": "Q1"}},
+            "from": "Produce",
+            "with": {
+                "name": "Produce",
+                "value": {"union_all": [
+                    {"select": [{"name": "product", "value": {"literal": "Kale"}}, {"name": "Q1", "value": 51}]},
+                    {"select": [{"name": "product", "value": {"literal": "Kale"}}, {"value": 10}]},
+                    {"select": [{"value": {"literal": "Apple"}}, {"value": 77}]},
+                ]},
+            },
+            "window": {"name": "item_window", "value": {"partitionby": "product"}},
         }
         self.assertEqual(result, expected)

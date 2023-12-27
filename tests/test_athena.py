@@ -179,3 +179,44 @@ class TestAthena(TestCase):
             "select": "*",
         }
         self.assertEqual(result, expected)
+
+    def test_issue_221_unpivot(self):
+        sql = """WITH Produce AS (
+          SELECT 'Kale' as product, 51 as Q1, 23 as Q2, 45 as Q3, 3 as Q4 UNION ALL
+          SELECT 'Apple', 77, 0, 25, 2)
+        SELECT * FROM Produce
+        UNPIVOT(sales FOR quarter IN (Q1 as 'Q1_a', Q2 as 'Q2_a', Q3, Q4))"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                "Produce",
+                {"unpivot": {
+                    "for": "quarter",
+                    "in": [
+                        {"name": "Q1_a", "value": "Q1"},
+                        {"name": "Q2_a", "value": "Q2"},
+                        "Q3",
+                        "Q4",
+                    ],
+                    "value": "sales",
+                }},
+            ],
+            "select": "*",
+            "with": {
+                "name": "Produce",
+                "value": {"union_all": [
+                    {"select": [
+                        {"name": "product", "value": {"literal": "Kale"}},
+                            {"name": "Q1", "value": 51},
+                            {"name": "Q2", "value": 23},
+                            {"name": "Q3", "value": 45},
+                            {"name": "Q4", "value": 3},
+                    ]},
+                    {"select": [
+                        {"value": {"literal": "Apple"}},
+                        {"value": 77}, {"value": 0}, {"value": 25}, {"value": 2},
+                    ]},
+                ]},
+            },
+        }
+        self.assertEqual(result, expected)

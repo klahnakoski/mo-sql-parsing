@@ -55,22 +55,20 @@ class TestBigQuery(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": [
-                "finishers",
-                {"window": {
-                    "name": "w1",
-                    "value": {
-                        "orderby": {"sort": "asc", "value": "finish_time"},
-                        "partitionby": "division",
-                        "range": {},
-                    },
-                }},
-            ],
+            "from": "finishers",
+            "window": {
+                "name": "w1",
+                "value": {
+                    "orderby": {"sort": "asc", "value": "finish_time"},
+                    "partitionby": "division",
+                    "range": {},
+                },
+            },
             "select": [
                 {"value": "name"},
                 {"name": "fastest_time", "over": "w1", "value": {"first_value": "finish_time"}},
                 {"name": "second_fastest", "over": "w1", "value": {"nth_value": ["finish_time", 2]}},
-            ],
+            ]
         }
         self.assertEqual(result, expected)
 
@@ -560,7 +558,7 @@ class TestBigQuery(TestCase):
                         "*********************..**************..**************",
                         {"unpivot": {
                             "for": "time_interval",
-                            "in": {"value": ["x0h00m_0h30m", "x0h30m_1h00m"]},
+                            "in": ["x0h00m_0h30m", "x0h30m_1h00m"],
                             "nulls": True,
                             "value": "status",
                         }},
@@ -1364,7 +1362,7 @@ class TestBigQuery(TestCase):
                                 ]},
                             },
                         ],
-                        "from": [
+                        "from":
                             {
                                 "select": "*",
                                 "from": "first_stage",
@@ -1380,11 +1378,10 @@ class TestBigQuery(TestCase):
                                     "value": {"orderby": {"value": "event_created_at"}, "partitionby": "id"},
                                 },
                             },
-                            {"window": {
-                                "name": "win",
-                                "value": {"orderby": {"value": "event_created_at"}, "partitionby": "id"},
-                            }},
-                        ],
+                        "window": {
+                            "name": "win",
+                            "value": {"orderby": {"value": "event_created_at"}, "partitionby": "id"},
+                        },
                     },
                 },
             ],
