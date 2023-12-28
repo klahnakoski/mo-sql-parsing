@@ -192,12 +192,7 @@ class TestAthena(TestCase):
                 "Produce",
                 {"unpivot": {
                     "for": "quarter",
-                    "in": [
-                        {"name": "Q1_a", "value": "Q1"},
-                        {"name": "Q2_a", "value": "Q2"},
-                        "Q3",
-                        "Q4",
-                    ],
+                    "in": [{"name": "Q1_a", "value": "Q1"}, {"name": "Q2_a", "value": "Q2"}, "Q3", "Q4",],
                     "value": "sales",
                 }},
             ],
@@ -207,16 +202,59 @@ class TestAthena(TestCase):
                 "value": {"union_all": [
                     {"select": [
                         {"name": "product", "value": {"literal": "Kale"}},
-                            {"name": "Q1", "value": 51},
-                            {"name": "Q2", "value": 23},
-                            {"name": "Q3", "value": 45},
-                            {"name": "Q4", "value": 3},
+                        {"name": "Q1", "value": 51},
+                        {"name": "Q2", "value": 23},
+                        {"name": "Q3", "value": 45},
+                        {"name": "Q4", "value": 3},
                     ]},
                     {"select": [
                         {"value": {"literal": "Apple"}},
-                        {"value": 77}, {"value": 0}, {"value": 25}, {"value": 2},
+                        {"value": 77},
+                        {"value": 0},
+                        {"value": 25},
+                        {"value": 2},
                     ]},
                 ]},
             },
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_223_external_function(self):
+        sql = """
+        USING    EXTERNAL FUNCTION decrypt(col VARCHAR, secretName VARCHAR) RETURNS VARCHAR LAMBDA 'athena_udf_v1',
+                 EXTERNAL FUNCTION encrypt(col VARCHAR, secretName VARCHAR) RETURNS VARCHAR LAMBDA 'athena_udf_v2'
+        SELECT   encrypt(t.plaintext, 'SOME_SECRET')
+                 FROM (SELECT decrypt('PREVIOUSLY_ENCRYPTED_MESSAGE', 'SOME_SECRET') as plaintext) as t
+        """
+        result = parse(sql)
+        expected = {
+            "from": {
+                "name": "t",
+                "value": {"select": {
+                    "name": "plaintext",
+                    "value": {"decrypt": [{"literal": "PREVIOUSLY_ENCRYPTED_MESSAGE"}, {"literal": "SOME_SECRET"}]},
+                }},
+            },
+            "select": {"value": {"encrypt": ["t.plaintext", {"literal": "SOME_SECRET"}]}},
+            "using": [
+                {"external_function": {
+                    "lambda": {"literal": "athena_udf_v1"},
+                    "name": "decrypt",
+                    "params": [
+                        {"name": "col", "type": {"varchar": {}}},
+                        {"name": "secretName", "type": {"varchar": {}}},
+                    ],
+                    "returns": {"varchar": {}},
+                }},
+                {"external_function": {
+                    "lambda": {"literal": "athena_udf_v2"},
+                    "name": "encrypt",
+                    "params": [
+                        {"name": "col", "type": {"varchar": {}}},
+                        {"name": "secretName", "type": {"varchar": {}}},
+                    ],
+                    "returns": {"varchar": {}},
+                }},
+            ],
         }
         self.assertEqual(result, expected)

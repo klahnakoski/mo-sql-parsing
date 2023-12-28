@@ -5,13 +5,14 @@
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
 from unittest import TestCase
+
+from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import parse
 
 
+@add_error_reporting
 class TestOracle(TestCase):
     def test_issue_90_tablesample1(self):
         sql = "SELECT * FROM foo SAMPLE bernoulli (1) WHERE a < 42"

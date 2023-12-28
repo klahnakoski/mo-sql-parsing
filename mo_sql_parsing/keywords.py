@@ -40,6 +40,7 @@ HAVING = keyword("having").suppress()
 ILIKE = keyword("ilike")
 INNER = keyword("inner")
 INTERVAL = keyword("interval")
+INTO = keyword("into").suppress()
 JOIN = keyword("join")
 LEFT = keyword("left")
 LIKE = keyword("like")
@@ -128,10 +129,11 @@ ASSIGN = Literal(":=").set_parser_name("assign")
 
 AND = keyword("and")
 APPLY = keyword("apply")
+BEGIN = keyword("begin").suppress()
 BETWEEN = keyword("between")
 CASE = keyword("case").suppress()
 COLLATE = keyword("collate")
-END = keyword("end")
+END = keyword("end").suppress()
 ELSE = keyword("else").suppress()
 IN = keyword("in")
 IS = keyword("is")
@@ -186,6 +188,7 @@ RESERVED = MatchFirst([
     AND,
     AS,
     ASC,
+    BEGIN,
     BETWEEN,
     BY,
     CASE,
@@ -207,9 +210,10 @@ RESERVED = MatchFirst([
     GROUP_BY,
     GROUP,
     HAVING,
-    IN,
+    INTO,
     INNER,
     INTERSECT,
+    IN,
     IS_NOT,
     IS,
     JOIN,
