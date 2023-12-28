@@ -15,6 +15,8 @@ from mo_sql_parsing.types import get_column_type, time_functions, _sizes
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
+delimiter_pattern = Literal(";").suppress()
+
 
 def common_parser(all_columns):
     atomic_ident = ansi_ident | mysql_backtick_ident | simple_ident
@@ -31,7 +33,7 @@ def mysql_parser(all_columns):
 
 def sqlserver_parser(all_columns):
     atomic_ident = ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident
-    return parser(regex_string | ansi_string | n_string, atomic_ident, sqlserver=True, all_columns=all_columns)
+    return parser(regex_string | ansi_string, atomic_ident, sqlserver=True, all_columns=all_columns)
 
 
 def bigquery_parser(all_columns):
@@ -61,6 +63,9 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         expression = Forward()
         (column_type, column_definition, column_def_references, column_option,) = get_column_type(
             expression, identifier, literal_string
+        )
+        proc_param = Group(
+            Optional(IN | keyword("out") | keyword("inout") / ["in", "out"])("mode") + identifier("name") + column_type
         )
 
         # CASE
@@ -450,9 +455,11 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         values = (VALUES + delimited_list(row)) / to_values
 
         named_over_clause = Group(identifier("name") + AS + (identifier | over_clause)("value"))
+        into = Optional(assign("into", Group(identifier + Optional(LB + delimited_list(ident) + RB))))
 
         unordered_sql = Group(
             (values | selection)
+            + into
             + Optional((FROM + delimited_list(table_source) + ZeroOrMore(join))("from"))
             + Optional(WHERE + expression("where"))
             + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
@@ -461,6 +468,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                 & Optional(WINDOW + delimited_list(named_over_clause)("window"))
                 & Optional(QUALIFY + expression("qualify"))
             )
+            + into
         )
 
         with NO_WHITESPACE:
@@ -562,8 +570,22 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + (AS + LB + (query | expression)("value") + RB)
         ))
 
+        using_external_function = (USING + delimited_list(Group(assign(
+            "external function",
+            identifier("name")
+            + LB
+            + Group(delimited_list(proc_param))("params")
+            + RB
+            + assign("returns", column_type/list)
+            + assign("lambda", literal_string)
+        ))))("using")
+
         query << (
-            Optional(assign("with recursive", with_clause) | assign("with", with_clause)) + Group(ordered_sql)("query")
+            ZeroOrMore(MatchFirst([
+                assign("with recursive", with_clause),
+                assign("with", with_clause),
+                using_external_function
+            ])) + Group(ordered_sql)("query")
         ) / to_query
 
         #####################################################################
@@ -571,7 +593,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         #####################################################################
 
         # MySQL's index_type := Using + ( "BTREE" | "HASH" )
-        index_type = Optional(assign("using", ident("index_type")))
+        index_type = Optional(assign("using", ident))
 
         index_column_names = (
             LB
@@ -579,37 +601,44 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + RB
         )
 
-        column_def_delete = assign("on delete", (keyword("cascade") | keyword("set null") | keyword("set default")),)
-
+        column_def_delete = assign(
+            "on delete", (keyword("cascade") | keyword("restrict") | keyword("set null") | keyword("set default")),
+        )
         table_def_foreign_key = FOREIGN_KEY + Optional(
             Optional(identifier("index_name"))
             + index_column_names
             + column_def_references
-            + Optional(column_def_delete)
+            + ZeroOrMore(column_def_delete | assign("on update", keyword("cascade")))
         )
 
         index_options = ZeroOrMore(identifier / (lambda t: {t[0]: True}))
 
-        table_constraint_definition = Optional(CONSTRAINT + identifier("name")) + (
-            assign(
-                "primary key",
-                index_type
-                + index_column_names
-                + index_type
-                + Optional(assign("comment", literal_string))
-                + index_options,
+        table_constraint_definition = Group(
+            Optional(CONSTRAINT + identifier("name"))
+            + (
+                assign(
+                    "primary key",
+                    Group(
+                        index_type
+                        + index_column_names
+                        + index_type
+                        + Optional(assign("comment", literal_string))
+                        + index_options,
+                    ),
+                )
+                | Group(
+                    Optional(flag("unique"))
+                    + Optional(INDEX | KEY)
+                    + Optional(identifier("name"))
+                    + index_column_names
+                    + index_type
+                    + Optional(assign("comment", literal_string))
+                    + index_options
+                )("index")
+                | assign("check", LB + expression + RB)
+                | table_def_foreign_key("foreign_key")
+                | assign("fulltext key", identifier("name") + index_column_names)
             )
-            | (
-                Optional(flag("unique"))
-                + Optional(INDEX | KEY)
-                + Optional(identifier("name"))
-                + index_column_names
-                + index_type
-                + Optional(assign("comment", literal_string))
-                + index_options
-            )("index")
-            | assign("check", LB + expression + RB)
-            | table_def_foreign_key("foreign_key")
         )
 
         table_element = table_constraint_definition("constraint") | column_definition("columns")
@@ -617,7 +646,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             (Keyword("temporary", caseless=True) | Keyword("temp", caseless=True))("temporary") / True
         ) + Optional(flag("transient"))
 
-        create_table = (
+        create_table = Group(
             keyword("create")
             + Optional(keyword("or") + flag("replace"))
             + temporary
@@ -639,7 +668,9 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + Optional(CLUSTER_BY.suppress() + LB + delimited_list(identifier) + RB)("cluster_by")
         )("create table")
 
-        create_view = (
+        definer = Optional(keyword("definer").suppress() + EQ + identifier("definer"))
+
+        create_view = Group(
             keyword("create")
             + Optional(keyword("or") + flag("replace"))
             + Optional(
@@ -647,12 +678,15 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                 + EQ
                 + (keyword("merge") | keyword("temptable") | keyword("undefined"))("algorithm")
             )
+            + definer
+            + Optional(assign("sql security", (keyword("definer") | keyword("invoker"))))
             + temporary
             + VIEW.suppress()
             + Optional((keyword("if not exists") / False)("replace"))
             + identifier("name")
             + AS
             + query("query")
+            + Optional(WITH + (keyword("cascaded") | keyword("local")) + keyword("check option").suppress())("check")
         )("create view")
 
         # CREATE INDEX a ON u USING btree (e);
@@ -667,6 +701,17 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + index_column_names
             + index_options
         )("create index")
+
+        create_schema = assign(
+            "create schema",
+            Group(
+                Optional(keyword("or") + flag("replace"))(INDEX | KEY)
+                + Optional((keyword("if not exists") / False)("replace"))
+                + identifier("name")
+            ),
+        )
+
+        use_schema = assign("use", identifier)
 
         cache_options = Optional((
             keyword("options").suppress()
@@ -686,11 +731,13 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + Optional(AS + query("query"))
         )("cache")
 
-        drop_table = (keyword("drop table") + Optional(flag("if exists")) + identifier("table"))("drop")
-
-        drop_view = (keyword("drop view") + Optional(flag("if exists")) + identifier("view"))("drop")
-
-        drop_index = (keyword("drop index") + Optional(flag("if exists")) + identifier("index"))("drop")
+        drops = assign(
+            "drop",
+            MatchFirst([
+                keyword(item).suppress() + Optional(flag("if exists")) + Group(identifier)(item)
+                for item in ["table", "view", "index", "schema"]
+            ]),
+        )
 
         returning = Optional(delimited_list(select_column)("returning"))
 
@@ -810,16 +857,19 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         )
 
         #############################################################
-        # PROCEDURAL
+        # GET/SET
         #############################################################
         special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
         declare_variable = assign("declare", column_definition)
-        set_variable = assign(
-            "set",
-            (special_ident + Optional(EQ) + expression)("params")
-            / (lambda t: {t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]}),
-        )
-        unset_variable = assign("unset", special_ident)
+        set_one_variable = SET + (
+            (special_ident + Optional(EQ) + expression)
+            / (lambda t: {t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]})
+        )("set")
+        set_variables = SET + delimited_list((
+            (special_ident + Optional(EQ) + expression)
+            / (lambda t: {t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]})
+        ))("set")
+        unset_one_variable = assign("unset", special_ident)
 
         copy_options = Forward()
         copy_options << ZeroOrMore(MatchFirst(
@@ -860,8 +910,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                 keyword("set data type") + column_type
                 | keyword("data type") + column_type
                 | keyword("type") + column_type
-                | set_variable
-                | unset_variable
+                | set_one_variable
+                | unset_one_variable
                 | assign("drop", column_option | special_ident)
                 | Optional(keyword("set")) + column_option
             )
@@ -946,17 +996,126 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             ),
         )
 
+        #############################################################
+        # USER FUNCTIONS
+        #############################################################
+
+        many_command = Forward()
+        block = Group(Optional(identifier("label") + ":") + BEGIN + Group(many_command)("block") + END)
+        if_block = (
+            assign("if", expression)
+            + assign("then", many_command)
+            + Optional(assign("else", many_command))
+            + keyword("end if").suppress()
+        )
+        leave = assign("leave", identifier)
+
+        create_trigger = assign(
+            "create trigger",
+            (
+                identifier("name")
+                + MatchFirst([keyword(k) for k in ["before", "after"]])("when")
+                + MatchFirst([keyword(k) for k in ["insert", "update", "delete"]])("event")
+                + ON
+                + identifier("table")
+                + keyword("for each row").suppress()
+                + statement("body")
+            ),
+        )
+
+        characteristic = ZeroOrMore(MatchFirst([
+            assign("comment", literal_string),
+            assign("language", keyword("sql")),
+            keyword("not deterministic") / {"deterministic": False},
+            keyword("deterministic") / {"deterministic": True},
+            keyword("contains sql") / {"contains_sql": True},
+            keyword("no sql") / {"contains_sql": False},
+            keyword("reads sql data") / {"sql_data": "read"},
+            keyword("modifies sql data") / {"sql_data": "write"},
+            assign("sql security", keyword("definer") | keyword("invoker")),
+        ]))
+
+        create_procedure = Group(
+            CREATE
+            + definer
+            + keyword("procedure")
+            + identifier("name")
+            + LB
+            + Group(delimited_list(proc_param))("params")
+            + RB
+            + characteristic
+            + statement("body")
+        )("create_procedure")
+
+        create_function = Group(
+            CREATE
+            + definer
+            + keyword("function")
+            + identifier("name")
+            + LB
+            + Group(delimited_list(Group(identifier("name") + column_type)))("params")
+            + RB
+            + assign("returns", column_type/list)
+            + characteristic
+            + statement("body")
+        )("create_function")
+
+        handler_condition = Group(MatchFirst([
+            keyword("sqlwarning"),
+            keyword("not found"),
+            keyword("sqlexception"),
+            assign("sqlstate", expression),
+            int_num("error_code"),
+            expression,
+        ]))
+
+        declare_hanlder = Group(
+            keyword("declare")
+            + Group(keyword("continue") | keyword("exit") | keyword("undo"))("action")
+            + keyword("handler for")
+            + delimited_list(handler_condition)("conditions")
+            + statement("body")
+        )("declare_handler")
+
+        transact = (
+            Group(keyword("start transaction")("op")) / to_json_call
+            | Group(keyword("commit")("op")) / to_json_call
+            | Group(keyword("rollback")("op")) / to_json_call
+        )
+
+        flow = block | if_block | leave | assign("return", expression)
+
+        #############################################################
+        # FINALLY ASSEMBLE THE PARSER
+        #############################################################
+
+        with NO_WHITESPACE:
+            delimiter_command = assign("delimiter", Regex(r"[^\n]+") / (lambda t: t[0].strip()))
+
         set_parser_names()
 
         debugger.__enter__()
 
-        statement << (
+        statement << Group(
             query
-            | (insert | update | delete | merge | truncate)
-            | (create_table | create_view | create_cache | create_index)
-            | (drop_table | drop_view | drop_index)
+            | (insert | update | delete | merge | truncate | use_schema)
+            | (create_table | create_view | create_cache | create_index | create_schema)
+            | drops
             | (copy | alter)
-            | (Optional(keyword("alter session")).suppress() + (set_variable | unset_variable | declare_variable))
+            | create_trigger
+            | create_procedure
+            | create_function
+            | explain
+            | delimiter_command
+            | declare_hanlder
+            | flow
+            | transact
+            | (Optional(keyword("alter session")).suppress() + (set_variables | unset_one_variable | declare_variable))
         )
 
-        return (explain | statement).finalize()
+        many_command << (
+            ZeroOrMore(delimiter_pattern)
+            + Optional(statement)
+            + ZeroOrMore(OneOrMore(delimiter_pattern) + Optional(statement))
+        )
+        return many_command.finalize()

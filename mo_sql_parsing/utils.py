@@ -55,7 +55,7 @@ def flag(keywords):
 
 
 def assign(key: str, value: ParserElement):
-    return keyword(key).suppress() + value(key.replace(" ", "_"))
+    return keyword(key).suppress() + Group(value)(key.replace(" ", "_"))
 
 
 scrub_op = simple_op
@@ -81,7 +81,7 @@ def scrub(result):
     elif isinstance(result, dict) and not result:
         return result
     elif isinstance(result, list):
-        output = [rr for r in result for rr in [scrub(r)]]
+        output = [rr for r in result for rr in [scrub(r)] if rr is not None]
 
         if not output:
             return None
@@ -705,6 +705,7 @@ def to_query(tokens):
     try:
         output["with"] = tokens["with"]
         output["with_recursive"] = tokens["with_recursive"]
+        output["using"] = tokens["using"]
 
         return output
     except Exception as cause:
@@ -718,16 +719,17 @@ def to_table(tokens):
     return [output["value"]]
 
 
-def single_nliteral(tokens):
-    val = tokens[0]
-    val = '"""' + val[2:-1].replace("''", "\\'").replace('"', '\\"') + '"""'
-    return {"nliteral": ast.literal_eval(val)}
-
-
 def single_literal(tokens):
-    val = tokens[0]
-    val = '"""' + val[1:-1].replace("''", "\\'").replace('"', '\\"') + '"""'
-    return {"literal": ast.literal_eval(val)}
+    val = str(tokens[0])
+    start = val.index("'")
+    literal = '"""' + val[start+1:-1].replace("''", "\\'").replace('"', '\\"') + '"""'
+    encoding = val[0:start].lower()
+    if encoding == "n":
+        return {f"nliteral": ast.literal_eval(literal)}
+    elif encoding:
+        return {f"literal": ast.literal_eval(literal), "encoding": encoding}
+    else:
+        return {"literal": ast.literal_eval(literal)}
 
 
 def double_literal(tokens):
@@ -804,8 +806,7 @@ int_pos = Regex(r"\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
 hex_num = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
 
 # STRINGS
-ansi_string = Regex(r"\'(\'\'|[^'])*\'") / single_literal
-n_string = Regex(r"[nN]?\'(\'\'|[^'])*\'") / single_nliteral
+ansi_string = Regex(r"(_utf8mb4|_utf8|_latin1|_ascii|_ucs2|_binary|n|N)?\'(\'\'|[^'])*\'") / single_literal
 regex_string = (Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")) / literal_regex
 mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
 

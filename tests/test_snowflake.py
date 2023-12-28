@@ -10,6 +10,7 @@
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import parse, normal_op

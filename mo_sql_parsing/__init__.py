@@ -6,8 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
+import re
 from threading import Lock
 from typing import Mapping
 
@@ -99,14 +98,25 @@ def _get_or_create_parser(parser_name, all_columns=None):
 
 
 def _parse(parser, sql, null, calls):
-    _utils.null_locations = []
-    _utils.scrub_op = calls
-    sql = sql.rstrip().rstrip(";")
-    parse_result = parser.parse_string(sql, parse_all=True)
-    output = scrub(parse_result)
-    for o, n in _utils.null_locations:
-        o[n] = null
-    return output
+    acc = []
+    for line in parse_delimiters(sql):
+        _utils.null_locations = []
+        _utils.scrub_op = calls
+        parse_result = parser.parse_string(line, parse_all=True)
+        output = scrub(parse_result)
+        for o, n in _utils.null_locations:
+            o[n] = null
+        if not output:
+            continue
+        if isinstance(output, list):
+            acc.extend(output)
+        else:
+            acc.append(output)
+    if len(acc) == 1:
+        return acc[0]
+    if not acc:
+        return None
+    return acc
 
 
 def format(json, ansi_quotes=True, should_quote=None):
@@ -137,6 +147,40 @@ def normal_op(op, args, kwargs):
     if kwargs:
         output.kwargs = kwargs
     return from_data(output)
+
+
+delimiter_pattern = re.compile(r"^\s*delimiter\s+([^\n]+)$", re.IGNORECASE | re.MULTILINE)
+
+
+def parse_delimiters(sql, ignore=";"):
+    delimiter = ";"
+    ender = r"\s*(\n|$)"
+    splitter = re.compile(re.escape(delimiter) + ender)
+
+    while True:
+        found = delimiter_pattern.search(sql)
+        if found:
+            block, sql = sql[:found.start()], sql[found.end():]
+            block = block.strip()
+        else:
+            block = sql.strip()
+
+        if block:
+            if delimiter == ignore:
+                yield block
+            else:
+                while True:
+                    inner_found = splitter.search(block)
+                    if not inner_found:
+                        yield block
+                        break
+                    yield block[:inner_found.start()]
+                    block = block[inner_found.end():]
+        if not found:
+            break
+        yield found.group(0)
+        delimiter = found.group(1).strip()
+        splitter = re.compile(re.escape(delimiter) + ender)
 
 
 __all__ = ["parse", "format", "parse_mysql", "parse_sqlserver", "parse_bigquery", "normal_op", "simple_op", "SQL_NULL"]

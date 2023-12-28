@@ -5,17 +5,17 @@
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+from itertools import zip_longest
 
+from mo_files import File
+from mo_parsing.debug import Debugger
+from mo_testing.fuzzytestcase import add_error_reporting, FuzzyTestCase, assertAlmostEqual
 
-from unittest import TestCase
-
-from mo_testing.fuzzytestcase import add_error_reporting
-
-from mo_sql_parsing import parse, parse_mysql
+from mo_sql_parsing import parse, parse_mysql, parse_delimiters
 
 
 @add_error_reporting
-class TestMySql(TestCase):
+class TestMySql(FuzzyTestCase):
     def test_issue_22(self):
         sql = 'SELECT "fred"'
         result = parse_mysql(sql)
@@ -838,4 +838,95 @@ class TestMySql(TestCase):
             {"value": {"assign": ["@var1", 1]}},
             {"value": {"assign": ["@var2", {"add": ["@var1", 1]}]}},
         ]}
+        self.assertEqual(result, expected)
+
+    def test_issue_218_udf(self):
+        from tests.mysql.issue_218 import expectations
+
+        content = File("tests/mysql/issue_218.sql").read()
+        blocks = list(parse_delimiters(content, ignore=None))
+        for i, (sql, expected) in enumerate(zip_longest(blocks, expectations)):
+            try:
+                result = parse(sql)
+                assertAlmostEqual(result, expected)
+                assertAlmostEqual(expected, result)
+            except Exception as cause:
+                raise cause
+
+    def test_issue_218_comment(self):
+        sql = """/*!50610 SET @@default_storage_engine = 'InnoDB'*/;"""
+        result = parse(sql)
+        self.assertIsNone(result)
+
+    def test_issue_218_trigger(self):
+        sql = """
+        DELIMITER ;;
+        CREATE TRIGGER `ins_film` AFTER INSERT ON `film` FOR EACH ROW BEGIN
+            INSERT INTO film_text (film_id, title, description)
+                VALUES (new.film_id, new.title, new.description);
+          END;;
+        """
+        parse("DELIMITER ;;")
+        result = parse(sql)
+        expected = [
+            {"delimiter": ";;"},
+            {"create_trigger": {
+                "body": {"block": {
+                    "columns": ["film_id", "title", "description"],
+                    "insert": "film_text",
+                    "query": {"select": [
+                        {"value": "new.film_id"},
+                        {"value": "new.title"},
+                        {"value": "new.description"},
+                    ]},
+                }},
+                "event": "insert",
+                "name": "ins_film",
+                "table": "film",
+                "when": "after",
+            }},
+        ]
+        self.assertEqual(result, expected)
+
+    def test_issue_218_procedure(self):
+        sql = """
+        CREATE PROCEDURE rewards_report (
+            IN min_monthly_purchases TINYINT UNSIGNED
+            , IN min_dollar_amount_purchased DECIMAL(10,2)
+            , OUT count_rewardees INT
+        )
+        LANGUAGE SQL
+        NOT DETERMINISTIC
+        READS SQL DATA
+        SQL SECURITY DEFINER
+        COMMENT 'Provides a customizable report on best customers'
+        proc: BEGIN
+        END"""
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "body": {"label": "proc"},
+            "comment": {"literal": "Provides a customizable report on best customers"},
+            "language": "sql",
+            "name": "rewards_report",
+            "params": [
+                {"mode": "in", "name": "min_monthly_purchases", "type": {"tinyint": {}, "unsigned": True}},
+                {"mode": "in", "name": "min_dollar_amount_purchased", "type": {"decimal": [10, 2]}},
+                {"mode": "out", "name": "count_rewardees", "type": {"int": {}}},
+            ],
+            "sql_security": "definer",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_218_transaction(self):
+        sql = """
+        START TRANSACTION;
+        COMMIT;
+        ROLLBACK;
+        """
+        result = parse(sql)
+        expected = [
+            {"start_transaction": {}},
+            {"commit": {}},
+            {"rollback": {}},
+        ]
         self.assertEqual(result, expected)
