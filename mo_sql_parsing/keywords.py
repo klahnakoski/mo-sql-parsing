@@ -148,7 +148,7 @@ VIEW = keyword("view")
 
 
 joins = (
-    Literal(",").set_parser_name("cross_join")/"cross join"
+    Literal(",").set_parser_name("cross_join") / "cross join"
     | (
         (
             Optional(CROSS | OUTER | INNER | NATURAL | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))) + JOIN

@@ -9,7 +9,7 @@
 
 
 import os
-from unittest import TestCase, skipIf
+from unittest import TestCase, skip
 
 from mo_files import File
 from mo_json import value2json
@@ -28,9 +28,8 @@ class TestSoQueries(TestCase):
     THESE QUERIES ARE MOSTLY VERY SIMILAR, NOT MANY USEFUL TESTS FOR A PARSER
     """
 
-    @skipIf(not IS_TRAVIS, "slow")
+    @skip("slow")
     def test_so_queries(self):
-        import mo_streams  # REQUIRED FOR FUNCTION CHAIN BELOW
 
         def careful_parse(sql):
             if not sql:

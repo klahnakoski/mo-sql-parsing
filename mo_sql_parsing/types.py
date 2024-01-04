@@ -229,9 +229,9 @@ def get_column_type(expr, identifier, literal_string):
     enum_type = assign("enum", LB + delimited_list(literal_string) + RB)
     set_type = assign("set", LB + delimited_list(literal_string) + RB)
 
-    column_type << (struct_type | row_type | array_type | enum_type | set_type | string_type | simple_types)("type") + Optional(
-        AS + LB + expr("value") + RB
-    )
+    column_type << (
+        struct_type | row_type | array_type | enum_type | set_type | string_type | simple_types
+    )("type") + Optional(AS + LB + expr("value") + RB)
 
     column_def_identity = (
         assign("generated", (keyword("always") | keyword("by default") / "by_default"),)

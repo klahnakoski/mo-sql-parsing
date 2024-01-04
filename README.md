@@ -16,14 +16,15 @@ The objective is to convert SQL queries to JSON-izable parse trees. This origina
 
 ## Project Status
 
-September 2022 -  I continue to resolve issues as they are raised. There are [over 1000 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that covers most SQL for most databases, with limited DML support, including:
+December 2023 -  I continue to resolve issues as they are raised. There are [over 1100 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that cover most SQL for most databases, with limited DML and UDF support, including:
 
   * inner queries, 
   * with clauses, 
   * window functions
   * create/drop/alter tables and views
   * insert/update/delete statements
-  * lambda (`->`) functions
+  * create procedure and function statements (MySQL only)
+
 
 ## Install
 
@@ -98,7 +99,7 @@ here is the pretty-printed JSON from the example above:
 
 ## Generating SQL
 
-You may also generate SQL from a given JSON document. This is done by the formatter, which is in Alpha state (Oct2021).
+You may also generate SQL from a given JSON document. This is done by the formatter, which is usually lagging the parser (Dec2023).
 
     >>> from mo_sql_parsing import format
     >>> format({"from":"test", "select":["a.b", "c"]})
@@ -157,6 +158,33 @@ for select in listwrap(parsed_result.get('select')):
 ```
 
 ## Version Changes, Features
+
+
+### Version 10
+
+*December 2023*
+
+`SELECT *` now emits an `all_columns` call instead of plain star (`*`).  
+
+```
+>>> from mo_sql_parsing import parse
+>>> parse("SELECT * FROM table")
+{'select': {'all_columns': {}}, 'from': 'table'}
+```
+
+This works better with the `except` clause, and is more explicit when selecting all child properties.
+
+``` 
+>>> parse("SELECT a.* EXCEPT b FROM table")
+>>> {"select": {"all_columns": "a", "except": "b"}, "from": "table"}
+```
+
+You may get the original behaviour by staying with version 9, or by using `all_columns="*"`:
+
+```
+>>> parse("SELECT * FROM table", all_columns="*")
+{'select': "*", 'from': 'table'}
+```
 
 
 ### Version 9
