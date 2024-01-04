@@ -446,14 +446,14 @@ class Formatter:
             body = json.replace("'", "''")
             return f"'{body}'"
         elif isinstance(json, dict):
-            if isinstance(json['literal'], list):
-                body = ", ".join(self._literal(v, precedence["literal"]) for v in json['literal'])
+            if isinstance(json["literal"], list):
+                body = ", ".join(self._literal(v, precedence["literal"]) for v in json["literal"])
                 return f"({body})"
 
             encoding = ""
             if json.get("encoding"):
-                encoding = json['encoding'].upper()
-            body = json['literal'].replace("'", "''")
+                encoding = json["encoding"].upper()
+            body = json["literal"].replace("'", "''")
             return f"{encoding}'{body}'"
         else:
             return str(json)

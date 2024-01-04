@@ -394,29 +394,39 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         table_source = Forward()
 
-        pivot_join = (
-            PIVOT("op")
-            + (
-                LB + expression("aggregate") + alias + assign("for", identifier) + (IN + expression("in")) + RB + alias
-            )("kwargs")
-        ) / to_pivot_call
-
-        # https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unpivot_operator
-        unpivot_join = (
-            UNPIVOT("op")
-            + Group(
-                Optional(keyword("EXCLUDE NULLS")("nulls") / False | keyword("INCLUDE NULLS")("nulls") / True)
-                + LB
-                + (expression("value") + assign("for", identifier) + IN)
-                + LB
-                + Group(delimited_list(
-                    Group(expression("value") + Optional(AS + literal_string("name"))) / to_unpivot_column
-                ))("in")
-                + RB
+        pivot_join = Group(assign(
+            "pivot",
+            (
+                LB
+                + Group(delimited_list(Group(expression("value") + alias) / to_pivot_column))("aggregate")
+                + (assign("for", identifier) + assign("in", expression))
                 + RB
                 + alias
-            )("kwargs")
-        ) / to_unpivot_call
+            ),
+        ))
+
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unpivot_operator
+        unpivot_join = Group(assign(
+            "unpivot",
+            (
+                Optional(keyword("EXCLUDE NULLS")("nulls") / False | keyword("INCLUDE NULLS")("nulls") / True)
+                + LB
+                + expression("value")
+                + assign("for", identifier)
+                + assign(
+                    "in",
+                    (
+                        LB
+                        + Group(delimited_list(
+                            Group(expression("value") + Optional(AS + literal_string("name"))) / to_unpivot_column
+                        ))
+                        + RB
+                    ),
+                )
+                + RB
+                + alias
+            ),
+        ))
 
         join = (
             pivot_join
@@ -570,22 +580,26 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + (AS + LB + (query | expression)("value") + RB)
         ))
 
-        using_external_function = (USING + delimited_list(Group(assign(
-            "external function",
-            identifier("name")
-            + LB
-            + Group(delimited_list(proc_param))("params")
-            + RB
-            + assign("returns", column_type/list)
-            + assign("lambda", literal_string)
-        ))))("using")
+        using_external_function = (
+            USING
+            + delimited_list(Group(assign(
+                "external function",
+                identifier("name")
+                + LB
+                + Group(delimited_list(proc_param))("params")
+                + RB
+                + assign("returns", column_type / list)
+                + assign("lambda", literal_string),
+            )))
+        )("using")
 
         query << (
             ZeroOrMore(MatchFirst([
                 assign("with recursive", with_clause),
                 assign("with", with_clause),
-                using_external_function
-            ])) + Group(ordered_sql)("query")
+                using_external_function,
+            ]))
+            + Group(ordered_sql)("query")
         ) / to_query
 
         #####################################################################
@@ -1055,7 +1069,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + LB
             + Group(delimited_list(Group(identifier("name") + column_type)))("params")
             + RB
-            + assign("returns", column_type/list)
+            + assign("returns", column_type / list)
             + characteristic
             + statement("body")
         )("create_function")

@@ -494,14 +494,6 @@ def to_join_call(tokens):
     return output
 
 
-def to_pivot_call(tokens):
-    return {"pivot": dict(tokens["kwargs"])}
-
-
-def to_unpivot_call(tokens):
-    return {"unpivot": dict(tokens["kwargs"])}
-
-
 def to_expression_call(tokens):
     if set(tokens.keys()) & {"over", "within", "filter"}:
         return
@@ -633,7 +625,15 @@ def to_unpivot_column(tokens):
     name = tokens["name"]
     if not name:
         return expr
-    return {"name": name['literal'], "value": expr}
+    return {"name": name["literal"], "value": expr}
+
+
+def to_pivot_column(tokens):
+    expr = tokens["value"][0]
+    name = tokens["name"]
+    if not name:
+        return expr
+    return {"name": name, "value": expr}
 
 
 def to_union_call(tokens):
@@ -722,7 +722,7 @@ def to_table(tokens):
 def single_literal(tokens):
     val = str(tokens[0])
     start = val.index("'")
-    literal = '"""' + val[start+1:-1].replace("''", "\\'").replace('"', '\\"') + '"""'
+    literal = '"""' + val[start + 1 : -1].replace("''", "\\'").replace('"', '\\"') + '"""'
     encoding = val[0:start].lower()
     if encoding == "n":
         return {f"nliteral": ast.literal_eval(literal)}

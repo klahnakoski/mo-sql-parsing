@@ -160,7 +160,7 @@ def parse_delimiters(sql, ignore=";"):
     while True:
         found = delimiter_pattern.search(sql)
         if found:
-            block, sql = sql[:found.start()], sql[found.end():]
+            block, sql = sql[: found.start()], sql[found.end() :]
             block = block.strip()
         else:
             block = sql.strip()
@@ -174,8 +174,8 @@ def parse_delimiters(sql, ignore=";"):
                     if not inner_found:
                         yield block
                         break
-                    yield block[:inner_found.start()]
-                    block = block[inner_found.end():]
+                    yield block[: inner_found.start()]
+                    block = block[inner_found.end() :]
         if not found:
             break
         yield found.group(0)
