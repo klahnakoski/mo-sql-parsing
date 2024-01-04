@@ -29,3 +29,10 @@ jobs:
     - pip install --upgrade pip
     - pip install wheel==0.41.2
     - pip install setuptools==65.5.0
+  - name: Python 3.12
+    dist: jammy
+    python: '3.12'
+    before_install:
+    - pip install --upgrade pip
+    - pip install wheel==0.42.0
+    - pip install setuptools==69.0.3
