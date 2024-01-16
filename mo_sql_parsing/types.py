@@ -99,6 +99,7 @@ CHAR = (
 ) / to_json_call
 
 NCHAR = (keyword("nchar")("op") + _size + _char_set) / to_json_call
+NVARCHAR = (keyword("nvarchar")("op") + _size + _char_set) / to_json_call
 VARCHAR = (keyword("varchar")("op") + _size + _char_set) / to_json_call
 VARCHAR2 = (keyword("varchar2")("op") + _size + _char_set) / to_json_call
 VARBINARY = (keyword("varbinary")("op") + _size + _char_set) / to_json_call
@@ -168,6 +169,7 @@ simple_types << MatchFirst([
     BYTEINT,
     JSON,
     NCHAR,
+    NVARCHAR,
     NUMBER,
     NUMERIC,
     REAL,
