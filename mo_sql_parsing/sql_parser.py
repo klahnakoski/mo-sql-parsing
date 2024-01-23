@@ -27,7 +27,7 @@ def mysql_parser(all_columns):
     utils.emit_warning_for_double_quotes = False
 
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
-    atomic_ident = mysql_backtick_ident | sqlserver_ident | ident_w_dash
+    atomic_ident = mysql_backtick_ident | sqlserver_ident | ident_w_dash_warning
     return parser(mysql_string, atomic_ident, all_columns=all_columns)
 
 
@@ -38,7 +38,7 @@ def sqlserver_parser(all_columns):
 
 def bigquery_parser(all_columns):
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
-    atomic_ident = ansi_ident | mysql_backtick_ident | simple_ident
+    atomic_ident = ansi_ident | mysql_backtick_ident | ident_w_dash
     return parser(mysql_string, atomic_ident, all_columns=all_columns)
 
 

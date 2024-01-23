@@ -1749,3 +1749,9 @@ class TestBigQuery(TestCase):
         }
 
         self.assertEqual(result, expected)
+
+    def test_issue_227_name(self):
+        query = """ select * from proj-prd.dataset.table"""
+        result = parse(query)
+        expected = {"from": "proj-prd.dataset.table", "select": "*"}
+        self.assertEqual(result, expected)
