@@ -113,6 +113,7 @@ unordered_clauses = [
     "where",
     "groupby",
     "having",
+    "union_all"
 ]
 
 ordered_clauses = [
@@ -593,7 +594,7 @@ class Formatter:
             part
             for clause in unordered_clauses
             if clause in json
-            for part in [getattr(self, clause)(json, precedence["from"])]
+            for part in [getattr(self, clause)(json, precedence[clause]+1)]
             if part
         )
         if prec > precedence["from"]:
@@ -602,12 +603,13 @@ class Formatter:
             return f"({sql})"
 
     def with_(self, json, prec):
-        if "with" in json:
-            with_ = json["with"]
-            if not isinstance(with_, list):
-                with_ = [with_]
-            parts = ", ".join("{0} AS ({1})".format(part["name"], self.dispatch(part["value"])) for part in with_)
-            return "WITH {0}".format(parts)
+        with_ = listwrap(json["with"])
+        parts = ", ".join(f"{part['name']} AS (\n{self.dispatch(part['value'])}\n)" for part in with_)
+        return f"WITH {parts}"
+
+    def union_all(self, json, prec):
+        sql = "\nUNION ALL\n".join(self.dispatch(part) for part in listwrap(json['union_all']))
+        return f"{sql}" if prec > precedence["union_all"] else f"({sql})"
 
     def select(self, json, prec):
         param = ", ".join(self.dispatch(s, precedence["select"]) for s in listwrap(json["select"]))

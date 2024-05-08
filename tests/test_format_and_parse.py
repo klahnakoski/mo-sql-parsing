@@ -11,9 +11,8 @@
 import re
 from unittest import TestCase
 
-from mo_future import get_function_name
 from mo_logs import logger
-from mo_parsing.debug import Debugger
+from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import format, parse
 from mo_sql_parsing.keywords import join_keywords
@@ -29,6 +28,7 @@ Broken JSON:
 """
 
 
+@add_error_reporting
 def remove_whitespace(sql):
     # WE ASSUME A WHITESPACE REMOVAL IS GOOD ENOUGH FOR COMPARE
     return re.sub(r"\s+", "", sql, flags=re.UNICODE)
@@ -1726,3 +1726,4 @@ order by number_sites desc"""
         expected_sql = "SELECT 'a' || 'a'"
         expected_json = {"select": {"value": {"concat": [{"literal": "a"}, {"literal": "a"}]}}}
         self.verify_formatting(expected_sql, expected_json)
+
