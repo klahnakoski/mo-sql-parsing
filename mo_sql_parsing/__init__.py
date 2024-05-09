@@ -26,60 +26,64 @@ lookup_parsers = {
 SQL_NULL: Mapping[str, Mapping] = {"null": {}}
 
 
-def parse(sql, null=SQL_NULL, calls=None, all_columns=None):
+def parse(sql, null=SQL_NULL, calls=None, all_columns=None, fmap=None):
     """
     GENERIC SQL PARSER. CHOSE ANOTHER IF YOU KNOW THE DIALECT
     :param sql: String of SQL
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
     :param calls: What to do with function calls (default is the simple_op function `{"op":{}}`)
     :param all_columns: use all_columns="*" for old behaviour (see version 10)
+    :param fmap: dict to rename functions
     :return: parse tree
     """
     with parse_locker:
         parser = _get_or_create_parser("common_parser", all_columns)
-        return _parse(parser, sql, null, calls or simple_op)
+        return _parse(parser, sql, null, calls or simple_op, fmap)
 
 
-def parse_mysql(sql, null=SQL_NULL, calls=None, all_columns=None):
+def parse_mysql(sql, null=SQL_NULL, calls=None, all_columns=None, is_null=None):
     """
     PARSE MySQL ASSUME DOUBLE QUOTED STRINGS ARE LITERALS
     :param sql: String of SQL
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
     :param calls: What to do with function calls (default is the simple_op function `{"op":{}}`)
     :param all_columns: use all_columns="*" for old behaviour (see version 10)
+    :param fmap: dict to rename functions
     :return: parse tree
     """
     with parse_locker:
         parser = _get_or_create_parser("mysql_parser", all_columns)
-        return _parse(parser, sql, null, calls or simple_op)
+        return _parse(parser, sql, null, calls or simple_op, is_null)
 
 
-def parse_sqlserver(sql, null=SQL_NULL, calls=None, all_columns=None):
+def parse_sqlserver(sql, null=SQL_NULL, calls=None, all_columns=None, is_null=None):
     """
     PARSE SqlServer ASSUME SQUARE BRACKETS ARE VARIABLE NAMES
     :param sql: String of SQL
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
     :param calls: What to do with function calls (default is the simple_op function `{"op":{}}`)
     :param all_columns: use all_columns="*" for old behaviour (see version 10)
+    :param fmap: dict to rename functions
     :return: parse tree
     """
     with parse_locker:
         parser = _get_or_create_parser("sqlserver_parser", all_columns)
-        return _parse(parser, sql, null, calls or simple_op)
+        return _parse(parser, sql, null, calls or simple_op, is_null)
 
 
-def parse_bigquery(sql, null=SQL_NULL, calls=None, all_columns=None):
+def parse_bigquery(sql, null=SQL_NULL, calls=None, all_columns=None, is_null=None):
     """
     PARSE BigQuery ASSUME DOUBLE QUOTED STRINGS ARE LITERALS, AND SQUARE BRACKETS ARE LISTS
     :param sql: String of SQL
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
     :param calls: What to do with function calls (default is the simple_op function `{"op":{}}`)
     :param all_columns: use all_columns="*" for old behaviour (see version 10)
+    :param fmap: dict to rename functions
     :return: parse tree
     """
     with parse_locker:
         parser = _get_or_create_parser("bigquery_parser", all_columns)
-        return _parse(parser, sql, null, calls or simple_op)
+        return _parse(parser, sql, null, calls or simple_op, is_null)
 
 
 def _get_or_create_parser(parser_name, all_columns=None):
@@ -97,11 +101,12 @@ def _get_or_create_parser(parser_name, all_columns=None):
         raise Exception("Expecting all_columns to be None or '*'") from cause
 
 
-def _parse(parser, sql, null, calls):
+def _parse(parser, sql, null, calls, fmap):
     acc = []
     for line in parse_delimiters(sql):
         _utils.null_locations = []
         _utils.scrub_op = calls
+        _utils.fmap = fmap or {}
         parse_result = parser.parse_string(line, parse_all=True)
         output = scrub(parse_result)
         for o, n in _utils.null_locations:

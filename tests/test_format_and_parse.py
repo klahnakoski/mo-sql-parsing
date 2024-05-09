@@ -1727,3 +1727,19 @@ order by number_sites desc"""
         expected_json = {"select": {"value": {"concat": [{"literal": "a"}, {"literal": "a"}]}}}
         self.verify_formatting(expected_sql, expected_json)
 
+    def test_issue_232_within_group(self):
+        expected_sql = """SELECT
+          PERCENTILE_CONT(0.25) WITHIN GROUP (
+            ORDER BY public.persentil.sale
+          ) as p25
+        FROM
+          public.persentil"""
+        expected_json = {
+            "select": {
+                "name": "p25",
+                "value": {"percentile_cont": 0.25},
+                "within": {"orderby": {"value": "public.persentil.sale"}},
+            },
+            "from": "public.persentil",
+        }
+        self.verify_formatting(expected_sql, expected_json)

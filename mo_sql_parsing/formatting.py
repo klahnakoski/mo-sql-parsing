@@ -270,6 +270,12 @@ class Formatter:
 
             window = " ".join(window)
             parts.append(f"({window})")
+        if "within" in json:
+            # WITHIN GROUP (
+            #             ORDER BY public.persentil.sale
+            #           )
+            ob = self.orderby(json['within'], 100)
+            parts.append(f"WITHIN GROUP ({ob})")
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
         if "tablesample" in json:

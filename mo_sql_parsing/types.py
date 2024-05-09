@@ -119,6 +119,7 @@ JSON = Group(keyword("json")("op")) / to_json_call
 
 DATE = keyword("date")
 DATETIME = keyword("datetime")
+DATETIMEOFFSET = keyword("datetimeoffset")
 DATETIME_W_TIMEZONE = keyword("datetime with time zone")
 TIME = keyword("time")
 TIMESTAMP = keyword("timestamp")
@@ -133,6 +134,7 @@ _format = Optional((ansi_string | ansi_ident)("params") | _size)
 
 DATE_TYPE = (DATE("op") + _format) / to_json_call
 DATETIME_TYPE = (DATETIME("op") + _format) / to_json_call
+DATETIMEOFFSET_TYPE = (DATETIMEOFFSET("op") + _format) / to_json_call
 DATETIME_W_TIMEZONE_TYPE = (DATETIME_W_TIMEZONE("op") + _format) / to_json_call
 TIME_TYPE = (TIME("op") + _format) / to_json_call
 TIMESTAMP_TYPE = (TIMESTAMP("op") + _format) / to_json_call
@@ -151,6 +153,7 @@ simple_types << MatchFirst([
     CHAR,
     DATE_TYPE,
     DATETIME_W_TIMEZONE_TYPE,
+    DATETIMEOFFSET_TYPE,
     DATETIME_TYPE,
     DECIMAL,
     DOUBLE_PRECISION,
