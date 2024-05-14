@@ -1511,3 +1511,9 @@ class TestSimple(TestCase):
         }
 
         self.assertEqual(result, expected)
+
+    def test_issue_230_is_null(self):
+        sql = 'select id from tbl where id is null'
+        result = parse(sql, fmap={"missing":"is_null", "exists":"is_not_null"})
+        expected = {"from": "tbl", "select": {"value": "id"}, "where": {"is_null": "id"}}
+        self.assertEqual(result, expected)

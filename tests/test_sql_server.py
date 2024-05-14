@@ -266,3 +266,32 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {'select': '*', 'from': 'dbo.table', 'where': {'eq': ['a', {'nliteral': 'Something'}]}}
         self.assertEqual(result, expected)
+
+    def test_issue_231(self):
+        sql = """select count(*) as r_c, SUM(CASE WHEN NOT (t_dt = CAST(FORMAT(t_dt, 'yyyy-MM-ddTHH:mm:ss.ffffff') AS datetimeoffset)) THEN 1 ELSE 0 END) as e_c from [dbo].[table] """
+        result = parse(sql)
+        expected = {
+            "select": [
+                {"name": "r_c", "value": {"count": "*"}},
+                {
+                    "name": "e_c",
+                    "value": {"sum": {
+                        "case": [
+                            {
+                                "when": {"not": {"eq": [
+                                    "t_dt",
+                                    {"cast": [
+                                        {"format": ["t_dt", {"literal":"yyyy-MM-ddTHH:mm:ss.ffffff"}]},
+                                        {"datetimeoffset": {}},
+                                    ]},
+                                ]}},
+                                "then": 1,
+                            },
+                            0,
+                        ],
+                    }},
+                },
+            ],
+            "from": "dbo.table",
+        }
+        self.assertEqual(result, expected)

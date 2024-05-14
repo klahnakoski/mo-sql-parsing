@@ -11,9 +11,8 @@
 import re
 from unittest import TestCase
 
-from mo_future import get_function_name
 from mo_logs import logger
-from mo_parsing.debug import Debugger
+from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import format, parse
 from mo_sql_parsing.keywords import join_keywords
@@ -29,6 +28,7 @@ Broken JSON:
 """
 
 
+@add_error_reporting
 def remove_whitespace(sql):
     # WE ASSUME A WHITESPACE REMOVAL IS GOOD ENOUGH FOR COMPARE
     return re.sub(r"\s+", "", sql, flags=re.UNICODE)
@@ -1725,4 +1725,21 @@ order by number_sites desc"""
     def test_concat(self):
         expected_sql = "SELECT 'a' || 'a'"
         expected_json = {"select": {"value": {"concat": [{"literal": "a"}, {"literal": "a"}]}}}
+        self.verify_formatting(expected_sql, expected_json)
+
+    def test_issue_232_within_group(self):
+        expected_sql = """SELECT
+          PERCENTILE_CONT(0.25) WITHIN GROUP (
+            ORDER BY public.persentil.sale
+          ) as p25
+        FROM
+          public.persentil"""
+        expected_json = {
+            "select": {
+                "name": "p25",
+                "value": {"percentile_cont": 0.25},
+                "within": {"orderby": {"value": "public.persentil.sale"}},
+            },
+            "from": "public.persentil",
+        }
         self.verify_formatting(expected_sql, expected_json)

@@ -672,6 +672,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                 assign("engine", EQ + identifier)
                 | assign("collate", EQ + identifier)
                 | assign("auto_increment", EQ + int_num)
+                | assign("autoincrement", EQ + int_num)
                 | assign("comment", EQ + literal_string)
                 | assign("default character set", EQ + identifier)
                 | assign("default charset", EQ + identifier)

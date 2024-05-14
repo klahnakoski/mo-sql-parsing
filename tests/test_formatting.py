@@ -310,7 +310,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_with_cte(self):
-        expected = "WITH t AS (SELECT a FROM table) SELECT * FROM t"
+        expected = "WITH t AS (\nSELECT a FROM table\n) SELECT * FROM t"
         result = format({
             "select": "*",
             "from": "t",
@@ -319,7 +319,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_with_cte_various(self):
-        expected = "WITH t1 AS (SELECT a FROM table), t2 AS (SELECT 1) SELECT * FROM t1, t2"
+        expected = "WITH t1 AS (\nSELECT a FROM table\n), t2 AS (\nSELECT 1\n) SELECT * FROM t1, t2"
         result = format({
             "select": "*",
             "from": ["t1", "t2"],
@@ -356,7 +356,7 @@ class TestSimple(TestCase):
         self.assertEqual(format_result, query)
 
     def test_issue_34_union_all(self):
-        query = "SELECT stuid FROM student UNION ALL SELECT stuid FROM student"
+        query = "SELECT stuid FROM student\nUNION ALL\nSELECT stuid FROM student"
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -827,5 +827,10 @@ class TestSimple(TestCase):
 
     def test_issue_220(self):
         sql = """SELECT TO_TIMESTAMP(A DEFAULT NULL ON CONVERSION ERROR, 'DD/MM/YYYY HH24:MI:SS') FROM B.C"""
+        result = format(parse(sql))
+        self.assertEqual(result, sql)
+
+    def test_issue_233_format_union(self):
+        sql = """WITH table_test AS (\nSELECT public.categories.string_agg AS string_agg FROM public.categories\n) SELECT * FROM table_test\nUNION ALL\nSELECT * FROM table_test"""
         result = format(parse(sql))
         self.assertEqual(result, sql)

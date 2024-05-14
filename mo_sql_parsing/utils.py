@@ -59,6 +59,7 @@ def assign(key: str, value: ParserElement):
 
 
 scrub_op = simple_op
+fmap = {}
 
 
 def scrub(result):
@@ -75,9 +76,10 @@ def scrub(result):
     elif isinstance(result, Call):
         kwargs = scrub(result.kwargs)
         args = scrub(result.args)
+        op = result.op
         if args is SQL_NULL:
-            null_locations.append((kwargs, result.op))
-        return scrub_op(result.op, args, kwargs)
+            null_locations.append((kwargs, op))
+        return scrub_op(fmap.get(op, op), args, kwargs)
     elif isinstance(result, dict) and not result:
         return result
     elif isinstance(result, list):

@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# This workflow will install Python dependencies, run tests, and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: build
@@ -7,7 +7,7 @@ on:
   push:
     branches: [ "master", "dev" ]
     tags:
-      - '[0-9]*'
+      - '[0-9]+'
 
 jobs:
   test:
@@ -20,10 +20,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Cache pip
       uses: actions/cache@v2
       with:
@@ -32,15 +34,33 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
           ${{ runner.os }}-pip-
-    - name: Install dependencies
+
+    - name: Install Dependencies with Retry
       run: |
         cp packaging/setup.py .
-        pip install .
+        max_attempts=5
+        sleep_seconds=10
+        attempt_num=1
+        until pip install .; do
+          echo "Attempt $attempt_num of $max_attempts failed! Trying again in $sleep_seconds seconds..."
+          sleep $sleep_seconds
+          ((attempt_num++))
+          if [[ $attempt_num -eq $max_attempts ]]; then
+            echo "All $max_attempts attempts have failed!"
+            exit 1
+          fi
+        done
+
+    - name: Install Test Dependencies
+      run: |
         python tests/smoke_test.py
         python -m pip install --upgrade pip
         pip install --no-deps -r tests/requirements.lock
         pip install .
+
     - name: Run Tests
+      env:
+        CI: true
       run: |
         python -m unittest discover tests -v
 
@@ -48,16 +68,17 @@ jobs:
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         python-version: ["3.12"]
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Cache pip
       uses: actions/cache@v2
       with:
@@ -66,6 +87,23 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
           ${{ runner.os }}-pip-
+
+    - name: Install Dependencies with Retry
+      run: |
+        cp packaging/setup.py .
+        max_attempts=5
+        sleep_seconds=10
+        attempt_num=1
+        until pip install .; do
+          echo "Attempt $attempt_num of $max_attempts failed! Trying again in $sleep_seconds seconds..."
+          sleep $sleep_seconds
+          ((attempt_num++))
+          if [[ $attempt_num -eq $max_attempts ]]; then
+            echo "All $max_attempts attempts have failed!"
+            exit 1
+          fi
+        done
+
     - name: Coverage
       env:
         COVERAGE: true
@@ -74,7 +112,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install --no-deps -r tests/requirements.lock
         pip install coverage coveralls
-        cp packaging/setup.py .
         pip install .
         coverage run --rcfile=packaging/coverage.ini -m unittest discover tests
         coverage report --rcfile=packaging/coverage.ini

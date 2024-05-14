@@ -1,5 +1,5 @@
-mo-testing>=7.559.24071
-mo-threads>=6.556.24070
-mo-files>=6.556.24070
-mo-streams>=1.556.24070
+mo-testing==7.562.24075
+mo-threads==6.570.24076
+mo-files==6.570.24076
+mo-streams==1.570.24076
 zstandard>=0.22.0
