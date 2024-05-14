@@ -1753,5 +1753,5 @@ class TestBigQuery(TestCase):
     def test_issue_227_name(self):
         query = """ select * from proj-prd.dataset.table"""
         result = parse(query)
-        expected = {"from": "proj-prd.dataset.table", "select": "*"}
+        expected = {"from": "proj-prd.dataset.table", "select": {"all_columns": {}}}
         self.assertEqual(result, expected)

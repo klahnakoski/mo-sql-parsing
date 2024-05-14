@@ -255,6 +255,7 @@ def get_column_type(expr, identifier, literal_string):
         | (NULL / True)("nullable")
         | flag("unique")
         | flag("auto_increment")
+        | flag("autoincrement")
         | assign("comment", literal_string)
         | assign("character set", identifier)
         | assign("collate", Optional(EQ) + identifier)
