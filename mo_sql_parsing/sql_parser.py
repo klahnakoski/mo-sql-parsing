@@ -745,7 +745,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         )
 
         use_schema = assign("use", identifier)
-
+        open_cursor = assign("open", identifier)
+        close_cursor= assign("close", identifier)
         cache_options = Optional((
             keyword("options").suppress()
             + LB
@@ -1144,6 +1145,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | declare_hanlder
             | flow
             | transact
+            | open_cursor
+            | close_cursor
             | (Optional(keyword("alter session")).suppress() + (set_variables | unset_one_variable | declare_variable))
         )
 
