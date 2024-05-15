@@ -779,6 +779,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         insert = (
             Optional(assign("with", with_clause))
             + keyword("insert").suppress()
+            + Optional(flag("ignore"))
             + (
                 flag("overwrite") + keyword("table").suppress()
                 | keyword("into").suppress() + Optional(keyword("table").suppress())
@@ -789,6 +790,21 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + (values | query)("query")
             + returning
         ) / to_insert_call
+
+        replace = (
+            Optional(assign("with", with_clause))
+            + keyword("replace").suppress()
+            + Optional(flag("ignore"))
+            + (
+                flag("overwrite") + keyword("table").suppress()
+                | keyword("into").suppress() + Optional(keyword("table").suppress())
+            )
+            + identifier("table")
+            + Optional(LB + delimited_list(identifier)("columns") + RB)
+            + Optional(flag("if exists"))
+            + (values | query)("query")
+            + returning
+        ) / to_replace_call
 
         update = (
             keyword("update")("op")
@@ -1044,6 +1060,11 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + keyword("end if").suppress()
         )
         leave = assign("leave", identifier)
+        while_block = (
+            assign("while", expression)
+            + assign("do", many_command)
+            + keyword("end while").suppress()
+        )
 
         create_trigger = assign(
             "create trigger",
@@ -1133,7 +1154,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         statement << Group(
             query
-            | (insert | update | delete | merge | truncate | use_schema)
+            | (insert | replace | update | delete | merge | truncate | use_schema)
             | (create_table | create_view | create_cache | create_index | create_schema)
             | drops
             | (copy | alter)
@@ -1147,6 +1168,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | transact
             | open_cursor
             | close_cursor
+            | while_block
             | (Optional(keyword("alter session")).suppress() + (set_variables | unset_one_variable | declare_variable))
         )
 
