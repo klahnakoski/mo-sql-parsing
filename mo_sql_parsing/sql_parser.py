@@ -766,7 +766,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         drops = assign(
             "drop",
-            MatchFirst([
+            temporary
+            +MatchFirst([
                 keyword(item).suppress() + Optional(flag("if exists")) + Group(identifier)(item)
                 for item in ["table", "view", "index", "schema"]
             ]),
