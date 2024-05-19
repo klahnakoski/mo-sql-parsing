@@ -27,7 +27,7 @@ def mysql_parser(all_columns):
     utils.emit_warning_for_double_quotes = False
 
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
-    atomic_ident = mysql_backtick_ident | sqlserver_ident | ident_w_dash/no_dashes
+    atomic_ident = mysql_backtick_ident | sqlserver_ident | ident_w_dash_warning
     return parser(mysql_string, atomic_ident, all_columns=all_columns)
 
 
