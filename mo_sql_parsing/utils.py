@@ -689,6 +689,7 @@ def to_insert_call(tokens):
 
     return Call("insert", [tokens["table"]], {"columns": columns, "query": query, **options})
 
+
 def to_replace_call(tokens):
     options = {k: v for k, v in tokens.items() if k not in ["columns", "table", "query"]}
     query = tokens["query"]
@@ -705,6 +706,7 @@ def to_replace_call(tokens):
         pass
 
     return Call("replace", [tokens["table"]], {"columns": columns, "query": query, **options})
+
 
 def to_update_call(tokens):
     value = tokens["value"]

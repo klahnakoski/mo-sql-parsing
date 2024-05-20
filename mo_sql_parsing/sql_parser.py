@@ -794,16 +794,10 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         replace = (
             Optional(assign("with", with_clause))
             + keyword("replace").suppress()
-            + Optional(flag("ignore"))
-            + (
-                flag("overwrite") + keyword("table").suppress()
-                | keyword("into").suppress() + Optional(keyword("table").suppress())
-            )
+            + Optional(keyword("into").suppress())
             + identifier("table")
             + Optional(LB + delimited_list(identifier)("columns") + RB)
-            + Optional(flag("if exists"))
             + (values | query)("query")
-            + returning
         ) / to_replace_call
 
         update = (

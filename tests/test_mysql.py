@@ -938,3 +938,92 @@ class TestMySql(FuzzyTestCase):
             {"rollback": {}},
         ]
         self.assertEqual(result, expected)
+
+    """
+    Tests to cover some permutations on the REPLACE statement with this grammer
+    15.2.12 REPLACE Statement
+
+    REPLACE [LOW_PRIORITY | DELAYED]
+        [INTO] tbl_name
+        [PARTITION (partition_name [, partition_name] ...)]
+        [(col_name [, col_name] ...)]
+        { {VALUES | VALUE} (value_list) [, (value_list)] ...
+          |
+          VALUES row_constructor_list
+        }
+    
+    REPLACE [LOW_PRIORITY | DELAYED]
+        [INTO] tbl_name
+        [PARTITION (partition_name [, partition_name] ...)]
+        SET assignment_list
+    
+    REPLACE [LOW_PRIORITY | DELAYED]
+        [INTO] tbl_name
+        [PARTITION (partition_name [, partition_name] ...)]
+        [(col_name [, col_name] ...)]
+        {SELECT ... | TABLE table_name}
+    
+    value:
+        {expr | DEFAULT}
+    
+    value_list:
+        value [, value] ...
+    
+    row_constructor_list:
+        ROW(value_list)[, ROW(value_list)][, ...]
+    
+    assignment:
+        col_name = value
+    
+    assignment_list:
+        assignment [, assignment] ...
+        
+    """
+
+    def test_pr_236_replace1(self):
+        sql = """
+        REPLACE INTO test_table (id, name) VALUES (1, 'New Name')        
+        """
+        result = parse(sql)
+        expected = {
+            "replace": "test_table",
+            "columns": ["id", "name"],
+            "query": {"select": [{"value": 1}, {"value": {"literal": "New Name"}}]}
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_replace2(self):
+        sql = """REPLACE INTO tab (name) VALUES(42)"""
+        result = parse(sql)
+        expected = {
+            "columns": "name",
+            "replace": "tab",
+            "query": {"select": {"value": 42}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_replace3(self):
+        sql = """replace into t (a, b, c) select x, y, z from f"""
+        result = parse(sql)
+        expected = {
+            "columns": ["a", "b", "c"],
+            "replace": "t",
+            "query": {"from": "f", "select": [{"value": "x"}, {"value": "y"}, {"value": "z"}]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_replace4(self):
+        sql = """REPLACE Person(Id, Name, DateOfBirth, Gender)
+            VALUES (1, 'John Lennon', '1940-10-09', 'M'), (2, 'Paul McCartney', '1942-06-18', 'M'),
+            (3, 'George Harrison', '1943-02-25', 'M'), (4, 'Ringo Starr', '1940-07-07', 'M')"""
+        result = parse(sql)
+        expected = {
+            "replace": "Person",
+            "values": [
+                {"DateOfBirth": "1940-10-09", "Gender": "M", "Id": 1, "Name": "John Lennon"},
+                {"DateOfBirth": "1942-06-18", "Gender": "M", "Id": 2, "Name": "Paul McCartney"},
+                {"DateOfBirth": "1943-02-25", "Gender": "M", "Id": 3, "Name": "George Harrison"},
+                {"DateOfBirth": "1940-07-07", "Gender": "M", "Id": 4, "Name": "Ringo Starr"},
+            ],
+        }
+        self.assertEqual(result, expected)
