@@ -1091,7 +1091,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + keyword("procedure")
             + identifier("name")
             + LB
-            + Group(delimited_list(proc_param))("params")
+            + Group(Optional(delimited_list(proc_param)))("params")
             + RB
             + characteristic
             + statement("body")

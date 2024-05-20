@@ -1027,3 +1027,29 @@ class TestMySql(FuzzyTestCase):
             ],
         }
         self.assertEqual(result, expected)
+
+    def test_pr_236_while(self):
+        sql = """
+        CREATE PROCEDURE dowhile()
+        BEGIN
+          DECLARE v1 INT DEFAULT 5;
+        
+          WHILE v1 > 0 DO
+            SET v1 = v1 - 1;
+          END WHILE;
+        END;"""
+
+        result = parse(sql)
+        expected = {
+            "create_procedure": {
+                "name": "dowhile",
+                "body": {"block": [
+                    {"declare": {"name": "v1", "default": 5, "type": {"int": {}}}},
+                    {
+                        "while": {"gt": ["v1", 0]},
+                        "do": {"set": {"v1": {"sub": ["v1", 1]}}},
+                    },
+                ]},
+            }
+        }
+        self.assertEqual(result, expected)
