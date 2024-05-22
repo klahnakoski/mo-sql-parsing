@@ -690,6 +690,24 @@ def to_insert_call(tokens):
     return Call("insert", [tokens["table"]], {"columns": columns, "query": query, **options})
 
 
+def to_replace_call(tokens):
+    options = {k: v for k, v in tokens.items() if k not in ["columns", "table", "query"]}
+    query = tokens["query"]
+    columns = tokens["columns"]
+    try:
+        values = query["from"]["literal"]
+        if values:
+            if columns:
+                data = [dict(zip(columns, row)) for row in values]
+                return Call("replace", [tokens["table"]], {"values": data, **options})
+            else:
+                return Call("replace", [tokens["table"]], {"values": values, **options})
+    except Exception:
+        pass
+
+    return Call("replace", [tokens["table"]], {"columns": columns, "query": query, **options})
+
+
 def to_update_call(tokens):
     value = tokens["value"]
     name = tokens["name"]

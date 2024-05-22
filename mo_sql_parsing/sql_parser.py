@@ -745,7 +745,9 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         )
 
         use_schema = assign("use", identifier)
-
+        open_cursor = assign("open", identifier)
+        close_cursor = assign("close", identifier)
+        fetch_cursor = assign("fetch", identifier) + INTO + delimited_list(ident)
         cache_options = Optional((
             keyword("options").suppress()
             + LB
@@ -766,7 +768,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         drops = assign(
             "drop",
-            MatchFirst([
+            temporary
+            +MatchFirst([
                 keyword(item).suppress() + Optional(flag("if exists")) + Group(identifier)(item)
                 for item in ["table", "view", "index", "schema"]
             ]),
@@ -777,6 +780,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         insert = (
             Optional(assign("with", with_clause))
             + keyword("insert").suppress()
+            + Optional(flag("ignore"))
             + (
                 flag("overwrite") + keyword("table").suppress()
                 | keyword("into").suppress() + Optional(keyword("table").suppress())
@@ -787,6 +791,15 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + (values | query)("query")
             + returning
         ) / to_insert_call
+
+        replace = (
+            Optional(assign("with", with_clause))
+            + keyword("replace").suppress()
+            + Optional(keyword("into").suppress())
+            + identifier("table")
+            + Optional(LB + delimited_list(identifier)("columns") + RB)
+            + (values | query)("query")
+        ) / to_replace_call
 
         update = (
             keyword("update")("op")
@@ -892,6 +905,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         #############################################################
         # GET/SET
         #############################################################
+        statement = Forward()
         special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
         declare_variable = assign("declare", column_definition)
         set_one_variable = SET + (
@@ -951,7 +965,6 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         ))
 
         # EXPLAIN
-        statement = Forward()
         explain_option = MatchFirst([
             (
                 Keyword(option, caseless=True)
@@ -1034,7 +1047,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         #############################################################
 
         many_command = Forward()
-        block = Group(Optional(identifier("label") + ":") + BEGIN + Group(many_command)("block") + END)
+        block = BEGIN + Group(many_command)("block") + END
         if_block = (
             assign("if", expression)
             + assign("then", many_command)
@@ -1042,6 +1055,16 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + keyword("end if").suppress()
         )
         leave = assign("leave", identifier)
+        while_block = (
+            assign("while", expression)
+            + assign("do", many_command)
+            + keyword("end while").suppress()
+        )
+        loop_block = (
+            keyword("loop").suppress()
+            + many_command("loop")
+            + keyword("end loop").suppress()
+        )
 
         create_trigger = assign(
             "create trigger",
@@ -1074,7 +1097,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + keyword("procedure")
             + identifier("name")
             + LB
-            + Group(delimited_list(proc_param))("params")
+            + Group(Optional(delimited_list(proc_param)))("params")
             + RB
             + characteristic
             + statement("body")
@@ -1110,13 +1133,26 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + statement("body")
         )("declare_handler")
 
+        declare_cursor = Group(
+            keyword("declare").suppress()
+            + identifier("name")
+            + keyword("cursor for").suppress()
+            + query("query")
+        )("declare_cursor")
+
+
         transact = (
             Group(keyword("start transaction")("op")) / to_json_call
             | Group(keyword("commit")("op")) / to_json_call
             | Group(keyword("rollback")("op")) / to_json_call
         )
 
-        flow = block | if_block | leave | assign("return", expression)
+        blocks = Group(Optional(identifier("label") + ":") + (
+            block
+            | if_block
+            | while_block
+            | loop_block
+        ))
 
         #############################################################
         # FINALLY ASSEMBLE THE PARSER
@@ -1131,7 +1167,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         statement << Group(
             query
-            | (insert | update | delete | merge | truncate | use_schema)
+            | (insert | replace | update | delete | merge | truncate | use_schema)
             | (create_table | create_view | create_cache | create_index | create_schema)
             | drops
             | (copy | alter)
@@ -1141,8 +1177,14 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | explain
             | delimiter_command
             | declare_hanlder
-            | flow
+            | declare_cursor
+            | leave
+            | assign("return", expression)
             | transact
+            | open_cursor
+            | close_cursor
+            | fetch_cursor
+            | blocks
             | (Optional(keyword("alter session")).suppress() + (set_variables | unset_one_variable | declare_variable))
         )
 

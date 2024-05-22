@@ -6,9 +6,9 @@
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 from itertools import zip_longest
+from unittest import skip
 
 from mo_files import File
-from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import add_error_reporting, FuzzyTestCase, assertAlmostEqual
 
 from mo_sql_parsing import parse, parse_mysql, parse_delimiters
@@ -937,4 +937,243 @@ class TestMySql(FuzzyTestCase):
             {"commit": {}},
             {"rollback": {}},
         ]
+        self.assertEqual(result, expected)
+
+    """
+    Tests to cover some permutations on the REPLACE statement with this grammer
+    15.2.12 REPLACE Statement
+
+    REPLACE [LOW_PRIORITY | DELAYED]
+        [INTO] tbl_name
+        [PARTITION (partition_name [, partition_name] ...)]
+        [(col_name [, col_name] ...)]
+        { {VALUES | VALUE} (value_list) [, (value_list)] ...
+          |
+          VALUES row_constructor_list
+        }
+    
+    REPLACE [LOW_PRIORITY | DELAYED]
+        [INTO] tbl_name
+        [PARTITION (partition_name [, partition_name] ...)]
+        SET assignment_list
+    
+    REPLACE [LOW_PRIORITY | DELAYED]
+        [INTO] tbl_name
+        [PARTITION (partition_name [, partition_name] ...)]
+        [(col_name [, col_name] ...)]
+        {SELECT ... | TABLE table_name}
+    
+    value:
+        {expr | DEFAULT}
+    
+    value_list:
+        value [, value] ...
+    
+    row_constructor_list:
+        ROW(value_list)[, ROW(value_list)][, ...]
+    
+    assignment:
+        col_name = value
+    
+    assignment_list:
+        assignment [, assignment] ...
+        
+    """
+
+    def test_pr_236_replace1(self):
+        sql = """
+        REPLACE INTO test_table (id, name) VALUES (1, 'New Name')        
+        """
+        result = parse(sql)
+        expected = {
+            "replace": "test_table",
+            "columns": ["id", "name"],
+            "query": {"select": [{"value": 1}, {"value": {"literal": "New Name"}}]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_replace2(self):
+        sql = """REPLACE INTO tab (name) VALUES(42)"""
+        result = parse(sql)
+        expected = {
+            "columns": "name",
+            "replace": "tab",
+            "query": {"select": {"value": 42}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_replace3(self):
+        sql = """replace into t (a, b, c) select x, y, z from f"""
+        result = parse(sql)
+        expected = {
+            "columns": ["a", "b", "c"],
+            "replace": "t",
+            "query": {"from": "f", "select": [{"value": "x"}, {"value": "y"}, {"value": "z"}]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_replace4(self):
+        sql = """REPLACE Person(Id, Name, DateOfBirth, Gender)
+            VALUES (1, 'John Lennon', '1940-10-09', 'M'), (2, 'Paul McCartney', '1942-06-18', 'M'),
+            (3, 'George Harrison', '1943-02-25', 'M'), (4, 'Ringo Starr', '1940-07-07', 'M')"""
+        result = parse(sql)
+        expected = {
+            "replace": "Person",
+            "values": [
+                {"DateOfBirth": "1940-10-09", "Gender": "M", "Id": 1, "Name": "John Lennon"},
+                {"DateOfBirth": "1942-06-18", "Gender": "M", "Id": 2, "Name": "Paul McCartney"},
+                {"DateOfBirth": "1943-02-25", "Gender": "M", "Id": 3, "Name": "George Harrison"},
+                {"DateOfBirth": "1940-07-07", "Gender": "M", "Id": 4, "Name": "Ringo Starr"},
+            ],
+        }
+        self.assertEqual(result, expected)
+
+    def test_pr_236_while1(self):
+        sql = """
+        CREATE PROCEDURE dowhile()
+        BEGIN
+          DECLARE v1 INT DEFAULT 5;
+
+          WHILE v1 > 0 DO
+            SET v1 = v1 - 1;
+          END WHILE;
+        END;"""
+
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "dowhile",
+            "body": {"block": [
+                {"declare": {"name": "v1", "default": 5, "type": {"int": {}}}},
+                {"while": {"gt": ["v1", 0]}, "do": {"set": {"v1": {"sub": ["v1", 1]}}},},
+            ]},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_pr_236_while2(self):
+        sql = """
+        CREATE PROCEDURE dowhile()
+        BEGIN
+          DECLARE v1 INT DEFAULT 5;
+
+          WHILE v1 > 0 DO
+            SET v1 = v1 - 1;
+            SET v2 = v2 + 1;
+          END WHILE;
+        END;"""
+
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "dowhile",
+            "body": {"block": [
+                {"declare": {"name": "v1", "default": 5, "type": {"int": {}}}},
+                {
+                    "while": {"gt": ["v1", 0]},
+                    "do": [{"set": {"v1": {"sub": ["v1", 1]}}}, {"set": {"v2": {"add": ["v2", 1]}}},],
+                },
+            ]},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_pr_236_cursor(self):
+        sql = """
+        CREATE PROCEDURE demo()
+        BEGIN
+          DECLARE done INT DEFAULT FALSE;
+          DECLARE a CHAR(16);
+          DECLARE cur1 CURSOR FOR SELECT id,data FROM test.t1;
+          DECLARE cur2 CURSOR FOR SELECT i FROM test.t2;
+          DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+        
+          OPEN cur1;
+          OPEN cur2;
+        
+          read_loop: LOOP
+            FETCH cur1 INTO a, b;
+            FETCH cur2 INTO c;
+            IF done THEN
+              LEAVE read_loop;
+            END IF;
+            IF b < c THEN
+              INSERT INTO test.t3 VALUES (a,b);
+            ELSE
+              INSERT INTO test.t3 VALUES (a,c);
+            END IF;
+          END LOOP;
+        
+          CLOSE cur1;
+          CLOSE cur2;
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "demo",
+            "body": {"block": [
+                {"declare": {"name": "done", "type": {"int": {}}, "default": False}},
+                {"declare": {"name": "a", "type": {"char": 16}}},
+                {"declare_cursor": {
+                    "name": "cur1",
+                    "query": {"select": [{"value": "id"}, {"value": "data"}], "from": "test.t1"},
+                }},
+                {"declare_cursor": {"name": "cur2", "query": {"select": {"value": "i"}, "from": "test.t2"}}},
+                {"declare_handler": {
+                    "action": "continue",
+                    "conditions": "not_found",
+                    "body": {"set": {"done": True}},
+                }},
+                {"open": "cur1"},
+                {"open": "cur2"},
+                {
+                    "label": "read_loop",
+                    "loop": [
+                        {"fetch": "cur1"},
+                        {"fetch": "cur2"},
+                        {"if": "done", "then": {"leave": "read_loop"}},
+                        {
+                            "if": {"lt": ["b", "c"]},
+                            "then": {"query": {"select": [{"value": "a"}, {"value": "b"}]}, "insert": "test.t3"},
+                            "else": {"query": {"select": [{"value": "a"}, {"value": "c"}]}, "insert": "test.t3"},
+                        },
+                    ],
+                },
+                {"close": "cur1"},
+                {"close": "cur2"},
+            ]},
+        }}
+        self.assertEqual(result, expected)
+
+    @skip("Not implemented yet")
+    def test_multiple_vars_in_declare(self):
+        sql = """
+        CREATE PROCEDURE curdemo()
+        BEGIN
+          DECLARE b, c INT;
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "curdemo",
+            "body": {"block": [
+                {"declare": {"name": "b", "type": {"int": {}}}},
+                {"declare": {"name": "c", "type": {"int": {}}}},
+            ]},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_declare_cursor(self):
+        sql = """
+        CREATE PROCEDURE demo()
+        BEGIN
+          DECLARE cur1 CURSOR FOR SELECT id,data FROM test.t1;
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "demo",
+            "body": {
+                "block": {"declare_cursor": {
+                    "name": "cur1",
+                    "query": {"select": [{"value": "id"}, {"value": "data"}], "from": "test.t1"},
+                }},
+            },
+        }}
         self.assertEqual(result, expected)
