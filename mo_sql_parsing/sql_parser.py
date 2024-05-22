@@ -746,7 +746,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         use_schema = assign("use", identifier)
         open_cursor = assign("open", identifier)
-        close_cursor= assign("close", identifier)
+        close_cursor = assign("close", identifier)
+        fetch_cursor = assign("fetch", identifier) + INTO + delimited_list(ident)
         cache_options = Optional((
             keyword("options").suppress()
             + LB
@@ -904,6 +905,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         #############################################################
         # GET/SET
         #############################################################
+        statement = Forward()
         special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
         declare_variable = assign("declare", column_definition)
         set_one_variable = SET + (
@@ -963,7 +965,6 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         ))
 
         # EXPLAIN
-        statement = Forward()
         explain_option = MatchFirst([
             (
                 Keyword(option, caseless=True)
@@ -1046,7 +1047,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         #############################################################
 
         many_command = Forward()
-        block = Group(Optional(identifier("label") + ":") + BEGIN + Group(many_command)("block") + END)
+        block = BEGIN + Group(many_command)("block") + END
         if_block = (
             assign("if", expression)
             + assign("then", many_command)
@@ -1058,6 +1059,11 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             assign("while", expression)
             + assign("do", many_command)
             + keyword("end while").suppress()
+        )
+        loop_block = (
+            keyword("loop").suppress()
+            + many_command("loop")
+            + keyword("end loop").suppress()
         )
 
         create_trigger = assign(
@@ -1127,13 +1133,26 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + statement("body")
         )("declare_handler")
 
+        declare_cursor = Group(
+            keyword("declare").suppress()
+            + identifier("name")
+            + keyword("cursor for").suppress()
+            + query("query")
+        )("declare_cursor")
+
+
         transact = (
             Group(keyword("start transaction")("op")) / to_json_call
             | Group(keyword("commit")("op")) / to_json_call
             | Group(keyword("rollback")("op")) / to_json_call
         )
 
-        flow = block | if_block | leave | assign("return", expression)
+        blocks = Group(Optional(identifier("label") + ":") + (
+            block
+            | if_block
+            | while_block
+            | loop_block
+        ))
 
         #############################################################
         # FINALLY ASSEMBLE THE PARSER
@@ -1158,11 +1177,14 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | explain
             | delimiter_command
             | declare_hanlder
-            | flow
+            | declare_cursor
+            | leave
+            | assign("return", expression)
             | transact
             | open_cursor
             | close_cursor
-            | while_block
+            | fetch_cursor
+            | blocks
             | (Optional(keyword("alter session")).suppress() + (set_variables | unset_one_variable | declare_variable))
         )
 
