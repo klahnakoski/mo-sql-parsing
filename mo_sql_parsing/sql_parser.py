@@ -328,6 +328,10 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + ZeroOrMore(Group(simple_accessor | dynamic_accessor))
         )
 
+        _lambda = Group(
+            LB + Group(delimited_list(identifier))("params") + RB + Literal("->").suppress() + expression("lambda")
+        )
+
         with NO_WHITESPACE:
 
             def scale(tokens):
@@ -355,6 +359,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | create_array
             | create_map
             | create_struct
+            | _lambda
             | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expression)) / to_tuple_call + RB)
             | literal_string
@@ -386,7 +391,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                             o,
                             1 if o in unary_ops else (3 if isinstance(o, tuple) else 2),
                             unary_ops.get(o, LEFT_ASSOC),
-                            to_lambda if o is LAMBDA else to_json_operator,
+                            to_json_operator,
                         )
                         for o in KNOWN_OPS
                     ],
@@ -769,7 +774,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         drops = assign(
             "drop",
             temporary
-            +MatchFirst([
+            + MatchFirst([
                 keyword(item).suppress() + Optional(flag("if exists")) + Group(identifier)(item)
                 for item in ["table", "view", "index", "schema"]
             ]),
@@ -1055,16 +1060,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + keyword("end if").suppress()
         )
         leave = assign("leave", identifier)
-        while_block = (
-            assign("while", expression)
-            + assign("do", many_command)
-            + keyword("end while").suppress()
-        )
-        loop_block = (
-            keyword("loop").suppress()
-            + many_command("loop")
-            + keyword("end loop").suppress()
-        )
+        while_block = assign("while", expression) + assign("do", many_command) + keyword("end while").suppress()
+        loop_block = keyword("loop").suppress() + many_command("loop") + keyword("end loop").suppress()
 
         create_trigger = assign(
             "create trigger",
@@ -1134,12 +1131,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         )("declare_handler")
 
         declare_cursor = Group(
-            keyword("declare").suppress()
-            + identifier("name")
-            + keyword("cursor for").suppress()
-            + query("query")
+            keyword("declare").suppress() + identifier("name") + keyword("cursor for").suppress() + query("query")
         )("declare_cursor")
-
 
         transact = (
             Group(keyword("start transaction")("op")) / to_json_call
@@ -1147,12 +1140,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | Group(keyword("rollback")("op")) / to_json_call
         )
 
-        blocks = Group(Optional(identifier("label") + ":") + (
-            block
-            | if_block
-            | while_block
-            | loop_block
-        ))
+        blocks = Group(Optional(identifier("label") + ":") + (block | if_block | while_block | loop_block))
 
         #############################################################
         # FINALLY ASSEMBLE THE PARSER

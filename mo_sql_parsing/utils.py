@@ -120,11 +120,6 @@ def _chunk(values, size):
         yield acc
 
 
-def to_lambda(tokens):
-    params, op, expr = list(tokens)
-    return Call("lambda", [expr], {"params": list(params)})
-
-
 def to_json_operator(tokens):
     # ARRANGE INTO {op: params} FORMAT
     length = len(tokens.tokens)
@@ -242,6 +237,16 @@ binary_ops = {
     "COLLATE": "collate",
     ":": "get",
     "||": "concat",
+    "->": "json_get",
+    "->>": "json_get_text",
+    "#>": "json_path",
+    "#>>": "json_path_text",
+    "@>": "json_subsumes",
+    "<@": "json_subsumed_by",
+    "?": "json_contains",
+    "?|": "json_contains_any",
+    "?&": "json_contains_all",
+    "#-": "json_path_del",
     "*": "mul",
     "/": "div",
     "%": "mod",
@@ -279,7 +284,6 @@ binary_ops = {
     "not_simlilar_to": "not_similar_to",
     "or": "or",
     "and": "and",
-    "->": "lambda",
     ":=": "assign",
     "union": "union",
     "union_all": "union_all",

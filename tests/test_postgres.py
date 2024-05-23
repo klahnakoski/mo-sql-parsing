@@ -529,3 +529,18 @@ class TestPostgres(TestCase):
         result = parse(sql)
         expected = {"select": {"value": {"extract": ["millennium", "date"]}}}
         self.assertEqual(result, expected)
+
+    def test_issue_239_jsonb1(self):
+        sql = """select jsonb ->> 'field_key' FROM a"""
+        result = parse(sql)
+        expected = {"from": "a", "select": {"value": {"json_get_text": ["jsonb", {"literal": "field_key"}]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_239_jsonb2(self):
+        sql = """select name::jsonb ->> 'field_key' FROM a"""
+        result = parse(sql)
+        expected = {
+            "from": "a",
+            "select": {"value": {"json_get_text": [{"cast": ["name", {"jsonb": {}}]}, {"literal": "field_key"}]}},
+        }
+        self.assertEqual(result, expected)
