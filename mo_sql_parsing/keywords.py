@@ -126,6 +126,17 @@ REGEXP = keyword("regexp").set_parser_name("rgx")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 ASSIGN = Literal(":=").set_parser_name("assign")
 
+JSON_GET = Literal("->").set_parser_name("json_get")
+JSON_GET_TEXT = Literal("->>").set_parser_name("json_get_text")
+JSON_PATH = Literal("#>").set_parser_name("json_path")
+JSON_PATH_TEXT = Literal("#>>").set_parser_name("json_path_text")
+JSON_SUBSUMES = Literal("@>").set_parser_name("json_subsumes")
+JSON_SUBSUMED_BY = Literal("<@").set_parser_name("json_subsumed_by")
+JSON_CONTAINS = Literal("?").set_parser_name("json_contains")
+JSON_CONTAINS_ANY = Literal("?|").set_parser_name("json_contains_any")
+JSON_CONTAINS_ALL = Literal("?&").set_parser_name("json_contains_all")
+JSON_PATH_DEL = Literal("#-").set_parser_name("json_path_del")
+
 AND = keyword("and")
 APPLY = keyword("apply")
 BEGIN = keyword("begin").suppress()
@@ -289,6 +300,16 @@ precedence = {
     "validate_conversion": 0,
     "collate": 0,
     "concat": 1,
+    "json_get": 1.5,
+    "json_get_text": 1.5,
+    "json_path": 1.5,
+    "json_path_text": 1.5,
+    "json_subsumes": 1.5,
+    "json_subsumed_by": 1.5,
+    "json_contains": 1.5,
+    "json_contains_any": 1.5,
+    "json_contains_all": 1.5,
+    "json_path_del": 1.5,
     "mul": 2,
     "div": 1.5,
     "mod": 2,
@@ -350,6 +371,16 @@ precedence = {
 KNOWN_OPS = [
     COLLATE,
     CONCAT,
+    JSON_GET_TEXT
+    | JSON_GET
+    | JSON_PATH_TEXT
+    | JSON_PATH
+    | JSON_SUBSUMES
+    | JSON_SUBSUMED_BY
+    | JSON_CONTAINS_ANY
+    | JSON_CONTAINS_ALL
+    | JSON_CONTAINS
+    | JSON_PATH_DEL,
     POS,
     NEG,
     MUL | DIV | MOD,
