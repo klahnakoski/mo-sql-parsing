@@ -1,4 +1,4 @@
-mo-future==7.546.24057
-mo-dots==9.578.24081
-mo-parsing==8.581.24094
-mo-imports==7.546.24057
+mo-future
+mo-dots
+mo-parsing
+mo-imports
