@@ -120,11 +120,6 @@ def _chunk(values, size):
         yield acc
 
 
-def to_lambda(tokens):
-    params, op, expr = list(tokens)
-    return Call("lambda", [expr], {"params": list(params)})
-
-
 def to_json_operator(tokens):
     # ARRANGE INTO {op: params} FORMAT
     length = len(tokens.tokens)

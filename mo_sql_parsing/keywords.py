@@ -124,7 +124,6 @@ INDF = (
 )
 REGEXP = keyword("regexp").set_parser_name("rgx")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
-LAMBDA = Literal("->").set_parser_name("lambda")
 ASSIGN = Literal(":=").set_parser_name("assign")
 
 AND = keyword("and")
@@ -378,7 +377,6 @@ KNOWN_OPS = [
     NOT,
     AND,
     OR,
-    LAMBDA,
     ASSIGN,
     REGEXP,
     NOT_REGEXP,
