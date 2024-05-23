@@ -304,11 +304,9 @@ class TestSqlServer(TestCase):
         sql = """create procedure k() BEGIN
         DECLARE @MYVARIABLE INT = 42;
         END"""
-        with Debugger():
-            result = parse(sql)
-        expected = {"create_procedure": {"body": {"block": {"declare": {
-            "default": 42,
-            "name": "@MYVARIABLE",
-            "type": {"int": {}},
-        }}}}}
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "k",
+            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}},}}},
+        }}
         self.assertEqual(result, expected)
