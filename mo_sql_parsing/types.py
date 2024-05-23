@@ -164,9 +164,9 @@ simple_types << MatchFirst([
     FLOAT,
     GEOMETRY,
     MAP_TYPE,
+    INT,
     INTEGER,
     INTERVAL,
-    INT,
     INT32,
     INT64,
     BYTEINT,
@@ -265,6 +265,7 @@ def get_column_type(expr, identifier, literal_string):
         | assign("check", LB + expr + RB)
         | assign("default", expr)
         | assign("on update", expr)
+        | (EQ + expr)("default")
     )
 
     column_definition << Group(

@@ -32,7 +32,7 @@ def mysql_parser(all_columns):
 
 
 def sqlserver_parser(all_columns):
-    atomic_ident = ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident
+    atomic_ident = ansi_ident | mysql_backtick_ident | sqlserver_ident | sqlserver_local_ident
     return parser(regex_string | ansi_string, atomic_ident, sqlserver=True, all_columns=all_columns)
 
 
