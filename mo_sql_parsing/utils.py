@@ -911,3 +911,4 @@ with whitespaces.NO_WHITESPACE:
     ident_w_dash_warning = Regex(ident_w_dash.__regex__()[1]).set_parser_name("identifier_with_dashes") / no_dashes
 
 simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
+sqlserver_local_ident = Word("@" + FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")

@@ -285,7 +285,7 @@ class TestSqlServer(TestCase):
                                 "when": {"not": {"eq": [
                                     "t_dt",
                                     {"cast": [
-                                        {"format": ["t_dt", {"literal":"yyyy-MM-ddTHH:mm:ss.ffffff"}]},
+                                        {"format": ["t_dt", {"literal": "yyyy-MM-ddTHH:mm:ss.ffffff"}]},
                                         {"datetimeoffset": {}},
                                     ]},
                                 ]}},
@@ -298,4 +298,15 @@ class TestSqlServer(TestCase):
             ],
             "from": "dbo.table",
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_237_declare_var(self):
+        sql = """create procedure k() BEGIN
+        DECLARE @MYVARIABLE INT = 42;
+        END"""
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "k",
+            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}},}}},
+        }}
         self.assertEqual(result, expected)
