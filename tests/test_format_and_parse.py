@@ -1762,3 +1762,5 @@ order by number_sites desc"""
             "from": "public.persentil",
         }
         self.verify_formatting(expected_sql, expected_json)
+
+    def test_issue_240_format_smoke_test(self):
