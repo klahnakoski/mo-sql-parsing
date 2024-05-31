@@ -23,7 +23,6 @@ lookup_parsers = {
     "bigquery_parser": {"*": None, None: None},
 }
 
-
 SQL_NULL: Mapping[str, Mapping] = {"null": {}}
 
 
