@@ -113,7 +113,7 @@ unordered_clauses = [
     "where",
     "groupby",
     "having",
-    "union_all"
+    "union_all",
 ]
 
 ordered_clauses = [
@@ -274,7 +274,7 @@ class Formatter:
             # WITHIN GROUP (
             #             ORDER BY public.persentil.sale
             #           )
-            ob = self.orderby(json['within'], 100)
+            ob = self.orderby(json["within"], 100)
             parts.append(f"WITHIN GROUP ({ob})")
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
@@ -590,7 +590,7 @@ class Formatter:
             part
             for clause in unordered_clauses
             if clause in json
-            for part in [getattr(self, clause)(json, precedence[clause]+1)]
+            for part in [getattr(self, clause)(json, precedence[clause] + 1)]
             if part
         )
         if prec > precedence["from"]:
@@ -604,7 +604,7 @@ class Formatter:
         return f"WITH {parts}"
 
     def union_all(self, json, prec):
-        sql = "\nUNION ALL\n".join(self.dispatch(part) for part in listwrap(json['union_all']))
+        sql = "\nUNION ALL\n".join(self.dispatch(part) for part in listwrap(json["union_all"]))
         return f"{sql}" if prec > precedence["union_all"] else f"({sql})"
 
     def select(self, json, prec):

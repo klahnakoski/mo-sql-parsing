@@ -61,7 +61,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         # EXPRESSIONS
         expression = Forward()
-        (column_type, column_definition, column_def_references, column_option,) = get_column_type(
+        (column_type, column_definition, column_def_references, column_option, declare_variable) = get_column_type(
             expression, identifier, literal_string
         )
         proc_param = Group(
@@ -912,7 +912,6 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         #############################################################
         statement = Forward()
         special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
-        declare_variable = assign("declare", column_definition)
         set_one_variable = SET + (
             (special_ident + Optional(EQ) + expression)
             / (lambda t: {t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]})

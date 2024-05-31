@@ -9,8 +9,6 @@
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse_sqlserver as parse
 
 
@@ -307,6 +305,46 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {"create_procedure": {
             "name": "k",
-            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}},}}},
+            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}}, }}},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_237_declare_var_with_as(self):
+        sql = """create procedure k() BEGIN
+        DECLARE @MYVARIABLE AS INT = 42;
+        END"""
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "k",
+            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}}}}},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_237_declare_multiple_vars(self):
+        sql = """create procedure k() BEGIN
+        DECLARE @MYVAR INT, @MYOTHERVAR DATE;
+        END"""
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "k",
+            "body": {"block": {"declare": [
+                {"name": "@MYVAR", "type": {"int": {}}},
+                {"name": "@MYOTHERVAR", "type": {"date": {}}},
+            ]}},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_237_declare_multiple_vars_with_code(self):
+        sql = """create procedure k() BEGIN
+        DECLARE @MYVAR INT, @MYOTHERVAR DATE;
+        SELECT a FROM rental;
+        END"""
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "k",
+            "body": {"block": [
+                {"declare": [{"name": "@MYVAR", "type": {"int": {}}}, {"name": "@MYOTHERVAR", "type": {"date": {}}}]},
+                {"select": {"value": "a"}, "from": "rental"},
+            ]},
         }}
         self.assertEqual(result, expected)
