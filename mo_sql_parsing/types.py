@@ -9,7 +9,6 @@
 
 
 # KNOWN TYPES
-from mo_imports import export
 from mo_parsing import (
     Forward,
     Group,
@@ -277,6 +276,3 @@ def get_column_type(expr, identifier, literal_string):
     set_parser_names()
 
     return column_type, column_definition, column_def_references, column_options
-
-
-export("mo_sql_parsing.utils", unary_ops)

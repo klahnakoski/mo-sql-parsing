@@ -7,11 +7,11 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 from mo_parsing import debug, Null
-from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
+from mo_parsing.whitespaces import NO_WHITESPACE
 
 from mo_sql_parsing import utils
 from mo_sql_parsing.keywords import *
-from mo_sql_parsing.types import get_column_type, time_functions, _sizes
+from mo_sql_parsing.types import get_column_type, time_functions, _sizes, unary_ops
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 

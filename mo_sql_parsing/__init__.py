@@ -131,7 +131,6 @@ def format(json, ansi_quotes=True, should_quote=None):
     :param should_quote: Function that returns True if a string should be quoted (because contains spaces, etc)
     :return: SQL string
     """
-    from mo_sql_parsing.sql_parser import utils as _
     from mo_sql_parsing.formatting import Formatter
 
     return Formatter(ansi_quotes, should_quote).dispatch(json)
