@@ -21,7 +21,8 @@ from mo_parsing import (
     RIGHT_ASSOC,
     LEFT_ASSOC,
     Keyword,
-    Combine, Empty,
+    Combine,
+    Empty,
 )
 
 from mo_sql_parsing.keywords import (
@@ -272,13 +273,11 @@ def get_column_type(expr, identifier, literal_string):
         identifier("name") + (column_type | identifier("type")) + ZeroOrMore(column_options)
     ) / to_flat_column_type
 
-    variable_options = (
-        assign("default", expr)
-        | EQ + expr("default")
+    variable_options = assign("default", expr) | EQ + expr("default")
+    declare_variable = assign(
+        "declare",
+        delimited_list(Group(identifier("name") + Optional(AS) + simple_types("type") + ZeroOrMore(variable_options))),
     )
-    declare_variable = assign("declare", delimited_list(Group(
-        identifier("name") + Optional(AS) + simple_types("type") + ZeroOrMore(variable_options)
-    )))
 
     set_parser_names()
 
