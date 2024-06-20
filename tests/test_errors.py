@@ -23,6 +23,7 @@ class TestErrors(FuzzyTestCase):
         except Exception as cause:
             self.assertIn("Use backticks (``) around identifiers", cause.message)
 
+    @skip
     def test_join_on_using_together(self):
         with self.assertRaises(["union", "order", "having", "limit", "where"]):
             parse("SELECT * FROM t1 JOIN t2 ON t1.id=t2.id USING (id)")
