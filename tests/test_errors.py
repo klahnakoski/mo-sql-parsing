@@ -29,7 +29,7 @@ class TestErrors(FuzzyTestCase):
 
     def test_dash_in_tablename_general(self):
         with self.assertRaises(Exception):
-            #              012345678901234567890123456789012345678901234567890123456789
+            #      012345678901234567890123456789012345678901234567890123456789
             parse("select * from coverage-summary.source.file.covered limit 20")
 
     def test_join_on_using_together_general(self):
