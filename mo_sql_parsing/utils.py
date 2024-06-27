@@ -908,8 +908,9 @@ def no_dashes(tokens, start, string):
 
 digit = Char("0123456789")
 with whitespaces.NO_WHITESPACE:
-    ident_w_dash = Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
-    ident_w_dash_warning = Regex(ident_w_dash.__regex__()[1]).set_parser_name("identifier_with_dashes") / no_dashes
+    # repack the expression into a regex for faster parsing ident_w_dash
+    ident_w_dash = Regex((Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]).__regex__()[1])
+    ident_w_dash_warning = ident_w_dash.set_parser_name("identifier_with_dashes") / no_dashes
 
 simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
 sqlserver_local_ident = Word("@" + FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
