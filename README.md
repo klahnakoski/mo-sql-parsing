@@ -48,13 +48,13 @@ The `SELECT` clause is an array of objects containing `name` and `value` propert
 
 There are a few parsing modes you may be interested in:
 
-#### Double-quotes for literal strings
+<u>**Double-quotes for literal strings**</u>
 
 MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour, but it is more forgiving for programmers coming from other languages. A specific parse function is provided: 
 
     result = parse_mysql(sql)
 
-#### SQLServer Identifiers (`[]`)
+<u>**SQLServer Identifiers (`[]`)**</u>
 
 SQLServer uses square brackets to delimit identifiers. For example
 
@@ -64,7 +64,7 @@ which conflicts with BigQuery array constructor (eg `[1, 2, 3, 4]`). You may use
     
     from mo_sql_parsing import parse_sqlserver as parse
 
-#### NULL is None
+<u>**NULL is None**</u>
 
 The default output for this parser is to emit a null function `{"null":{}}` wherever `NULL` is encountered in the SQL.  If you would like something different, you can replace nulls with `None` (or anything else for that matter):
 
@@ -73,7 +73,7 @@ The default output for this parser is to emit a null function `{"null":{}}` wher
 this has been implemented with a post-parse rewriting of the parse tree.
 
 
-#### Normalized function call form
+<u>**Normalized function call form**</u>
 
 The default behaviour of the parser is to output function calls in `simple_op` format: The operator being a key in the object; `{op: params}`.  This form can be difficult to work with because the object must be scanned for known operators, or possible optional arguments, or at least distinguished from a query object.
 
