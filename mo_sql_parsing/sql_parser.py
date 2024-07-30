@@ -704,6 +704,11 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             )
             + Optional(AS.suppress() + infix_notation(query, [])("query"))
             + Optional(CLUSTER_BY.suppress() + LB + delimited_list(identifier) + RB)("cluster_by")
+            + ZeroOrMore(
+                assign("sortkey", LB + delimited_list(identifier) + RB)
+                | assign("distkey", LB + identifier + RB)
+            )
+
         )("create table")
 
         definer = Optional(keyword("definer").suppress() + EQ + identifier("definer"))
