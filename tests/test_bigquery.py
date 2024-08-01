@@ -1755,3 +1755,255 @@ class TestBigQuery(TestCase):
         result = parse(query)
         expected = {"from": "proj-prd.dataset.table", "select": "*"}
         self.assertEqual(result, expected)
+
+    def test_issue_242_stack_overflow_2(self):
+        query = """
+        SELECT (FORMAT_TIMESTAMP('%Y-%m', analytics.event_timestamp, 'Region/TimeZone')) AS event_timestamp_month,  
+        COUNT(DISTINCT CASE  WHEN (engagements.engagement_segment = 'engaged')  
+        THEN engagements.user_id ELSE NULL END) AS engagements_engaged_user  
+        FROM "database"."schema"."analytics" AS analytics  
+        LEFT JOIN "database"."schema"."content" AS content  
+        ON analytics.content_id = content.id  
+        AND analytics.site = content.site  
+        LEFT JOIN UNNEST(content.matching_teams) AS _q_0(content_matching_teams)  
+        LEFT JOIN "database"."schema"."engagements" AS engagements  
+        ON (DATE(analytics.event_timestamp, 'Region/TimeZone')) = engagements.event_date  
+        AND analytics.user_id = engagements.user_id  
+        AND (engagements.event_date BETWEEN  (DATE(COALESCE(TIMESTAMP(DATETIME_ADD(DATETIME(TIMESTAMP_TRUNC(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY, 'Region/TimeZone'), MONTH, 'Region/TimeZone'), 'Region/TimeZone'), -6, MONTH), 'Region/TimeZone'), CURRENT_TIMESTAMP()), 'Region/TimeZone'))  
+        AND (DATE(COALESCE(TIMESTAMP(DATETIME_ADD(DATETIME(TIMESTAMP(DATETIME_ADD(DATETIME(TIMESTAMP_TRUNC(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY, 'Region/TimeZone'), MONTH, 'Region/TimeZone'), 'Region/TimeZone'), -6, MONTH), 'Region/TimeZone'), 'Region/TimeZone'), 6, MONTH), 'Region/TimeZone'), CURRENT_TIMESTAMP()), 'Region/TimeZone')))  
+        WHERE ((REGEXP_EXTRACT(analytics.event_params__page_location, '^https?:\\/\\/(?:www\\.)?([^\\/]+)', 1)) IS NULL  
+        OR (REGEXP_EXTRACT(analytics.event_params__page_location, '^https?:\\/\\/(?:www\\.)?([^\\/]+)', 1)) = 'example1.com'  
+        OR (REGEXP_EXTRACT(analytics.event_params__page_location, '^https?:\\/\\/(?:www\\.)?([^\\/]+)', 1)) = 'example2.com'  
+        OR (REGEXP_EXTRACT(analytics.event_params__page_location, '^https?:\\/\\/(?:www\\.)?([^\\/]+)', 1)) = 'example3.com'  
+        OR (REGEXP_EXTRACT(analytics.event_params__page_location, '^https?:\\/\\/(?:www\\.)?([^\\/]+)', 1)) = 'example4.com')  
+        AND (_q_0.content_matching_teams) = 'Team/Team (Gesamt)'  
+        AND (((analytics.event_timestamp) >=  (TIMESTAMP(DATETIME_ADD(DATETIME(TIMESTAMP_TRUNC(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY, 'Region/TimeZone'), MONTH, 'Region/TimeZone'), 'Region/TimeZone'), -6, MONTH), 'Region/TimeZone')))  
+        AND (analytics.event_timestamp) <  (TIMESTAMP(DATETIME_ADD(DATETIME(TIMESTAMP(DATETIME_ADD(DATETIME(TIMESTAMP_TRUNC(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY, 'Region/TimeZone'), MONTH, 'Region/TimeZone'), 'Region/TimeZone'), -6, MONTH), 'Region/TimeZone'), 'Region/TimeZone'), 6, MONTH), 'Region/TimeZone')))
+        AND (analytics.site = 'X')  
+        AND (analytics.site IN ('X'))  
+        AND (1 = 1 AND _q_0.content_matching_teams LIKE 'Team/Team')  
+        GROUP BY (FORMAT_TIMESTAMP('%Y-%m', analytics.event_timestamp, 'Region/TimeZone'))  
+        ORDER BY event_timestamp_month DESC  LIMIT 500
+        """
+        result = parse(query)
+        expected = {
+            "from": [
+                {"name": "analytics", "value": "database.schema.analytics"},
+                {
+                    "left join": {"name": "content", "value": "database.schema.content"},
+                    "on": {"and": [
+                        {"eq": ["analytics.content_id", "content.id"]},
+                        {"eq": ["analytics.site", "content.site"]},
+                    ]},
+                },
+                {"left join": {
+                    "name": {"_q_0": "content_matching_teams"},
+                    "value": {"unnest": "content.matching_teams"},
+                }},
+                {
+                    "left join": {"name": "engagements", "value": "database.schema.engagements"},
+                    "on": {"and": [
+                        {"eq": [
+                            {"date": ["analytics.event_timestamp", {"literal": "Region/TimeZone"}]},
+                            "engagements.event_date",
+                        ]},
+                        {"eq": ["analytics.user_id", "engagements.user_id"]},
+                        {"between": [
+                            "engagements.event_date",
+                            {"date": [
+                                {"coalesce": [
+                                    {"timestamp": [
+                                        {"datetime_add": [
+                                            {"datetime": [
+                                                {"timestamp_trunc": [
+                                                    {"timestamp_trunc": [
+                                                        {"current_timestamp": {}},
+                                                        "DAY",
+                                                        {"literal": "Region/TimeZone"},
+                                                    ]},
+                                                    "MONTH",
+                                                    {"literal": "Region/TimeZone"},
+                                                ]},
+                                                {"literal": "Region/TimeZone"},
+                                            ]},
+                                            -6,
+                                            "MONTH",
+                                        ]},
+                                        {"literal": "Region/TimeZone"},
+                                    ]},
+                                    {"current_timestamp": {}},
+                                ]},
+                                {"literal": "Region/TimeZone"},
+                            ]},
+                            {"date": [
+                                {"coalesce": [
+                                    {"timestamp": [
+                                        {"datetime_add": [
+                                            {"datetime": [
+                                                {"timestamp": [
+                                                    {"datetime_add": [
+                                                        {"datetime": [
+                                                            {"timestamp_trunc": [
+                                                                {"timestamp_trunc": [
+                                                                    {"current_timestamp": {}},
+                                                                    "DAY",
+                                                                    {"literal": "Region/TimeZone"},
+                                                                ]},
+                                                                "MONTH",
+                                                                {"literal": "Region/TimeZone"},
+                                                            ]},
+                                                            {"literal": "Region/TimeZone"},
+                                                        ]},
+                                                        -6,
+                                                        "MONTH",
+                                                    ]},
+                                                    {"literal": "Region/TimeZone"},
+                                                ]},
+                                                {"literal": "Region/TimeZone"},
+                                            ]},
+                                            6,
+                                            "MONTH",
+                                        ]},
+                                        {"literal": "Region/TimeZone"},
+                                    ]},
+                                    {"current_timestamp": {}},
+                                ]},
+                                {"literal": "Region/TimeZone"},
+                            ]},
+                        ]},
+                    ]},
+                },
+            ],
+            "groupby": {"value": {"format_timestamp": [
+                {"literal": "%Y-%m"},
+                "analytics.event_timestamp",
+                {"literal": "Region/TimeZone"},
+            ]}},
+            "limit": 500,
+            "orderby": {"sort": "desc", "value": "event_timestamp_month"},
+            "select": [
+                {
+                    "name": "event_timestamp_month",
+                    "value": {"format_timestamp": [
+                        {"literal": "%Y-%m"},
+                        "analytics.event_timestamp",
+                        {"literal": "Region/TimeZone"},
+                    ]},
+                },
+                {
+                    "name": "engagements_engaged_user",
+                    "value": {
+                        "count": {"case": [
+                            {
+                                "then": "engagements.user_id",
+                                "when": {"eq": ["engagements.engagement_segment", {"literal": "engaged"}]},
+                            },
+                            {"null": {}},
+                        ]},
+                        "distinct": True,
+                    },
+                },
+            ],
+            "where": {"and": [
+                {"or": [
+                    {"missing": {"regexp_extract": [
+                        "analytics.event_params__page_location",
+                        {"literal": "^https?:\\/\\/(?:www\\.)?([^\\/]+)"},
+                        1,
+                    ]}},
+                    {"eq": [
+                        {"regexp_extract": [
+                            "analytics.event_params__page_location",
+                            {"literal": "^https?:\\/\\/(?:www\\.)?([^\\/]+)"},
+                            1,
+                        ]},
+                        {"literal": "example1.com"},
+                    ]},
+                    {"eq": [
+                        {"regexp_extract": [
+                            "analytics.event_params__page_location",
+                            {"literal": "^https?:\\/\\/(?:www\\.)?([^\\/]+)"},
+                            1,
+                        ]},
+                        {"literal": "example2.com"},
+                    ]},
+                    {"eq": [
+                        {"regexp_extract": [
+                            "analytics.event_params__page_location",
+                            {"literal": "^https?:\\/\\/(?:www\\.)?([^\\/]+)"},
+                            1,
+                        ]},
+                        {"literal": "example3.com"},
+                    ]},
+                    {"eq": [
+                        {"regexp_extract": [
+                            "analytics.event_params__page_location",
+                            {"literal": "^https?:\\/\\/(?:www\\.)?([^\\/]+)"},
+                            1,
+                        ]},
+                        {"literal": "example4.com"},
+                    ]},
+                ]},
+                {"eq": ["_q_0.content_matching_teams", {"literal": "Team/Team (Gesamt)"}]},
+                {"gte": [
+                    "analytics.event_timestamp",
+                    {"timestamp": [
+                        {"datetime_add": [
+                            {"datetime": [
+                                {"timestamp_trunc": [
+                                    {"timestamp_trunc": [
+                                        {"current_timestamp": {}},
+                                        "DAY",
+                                        {"literal": "Region/TimeZone"},
+                                    ]},
+                                    "MONTH",
+                                    {"literal": "Region/TimeZone"},
+                                ]},
+                                {"literal": "Region/TimeZone"},
+                            ]},
+                            -6,
+                            "MONTH",
+                        ]},
+                        {"literal": "Region/TimeZone"},
+                    ]},
+                ]},
+                {"lt": [
+                    "analytics.event_timestamp",
+                    {"timestamp": [
+                        {"datetime_add": [
+                            {"datetime": [
+                                {"timestamp": [
+                                    {"datetime_add": [
+                                        {"datetime": [
+                                            {"timestamp_trunc": [
+                                                {"timestamp_trunc": [
+                                                    {"current_timestamp": {}},
+                                                    "DAY",
+                                                    {"literal": "Region/TimeZone"},
+                                                ]},
+                                                "MONTH",
+                                                {"literal": "Region/TimeZone"},
+                                            ]},
+                                            {"literal": "Region/TimeZone"},
+                                        ]},
+                                        -6,
+                                        "MONTH",
+                                    ]},
+                                    {"literal": "Region/TimeZone"},
+                                ]},
+                                {"literal": "Region/TimeZone"},
+                            ]},
+                            6,
+                            "MONTH",
+                        ]},
+                        {"literal": "Region/TimeZone"},
+                    ]},
+                ]},
+                {"eq": ["analytics.site", {"literal": "X"}]},
+                {"in": ["analytics.site", {"literal": "X"}]},
+                {"eq": [1, 1]},
+                {"like": ["_q_0.content_matching_teams", {"literal": "Team/Team"}]},
+            ]},
+        }
+
+        self.assertEqual(result, expected)
