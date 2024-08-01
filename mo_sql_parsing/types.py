@@ -259,6 +259,7 @@ def get_column_type(expr, identifier, literal_string):
         | flag("auto_increment")
         | flag("autoincrement")
         | assign("comment", literal_string)
+        | assign("encode", identifier)
         | assign("character set", identifier)
         | assign("collate", Optional(EQ) + identifier)
         | flag("primary key")
