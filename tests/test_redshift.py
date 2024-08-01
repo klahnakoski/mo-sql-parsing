@@ -13,6 +13,158 @@ from mo_sql_parsing import parse
 
 
 class TestRedshift(TestCase):
+    def test_issue245a_encode(self):
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS web.customers
+            (
+               customer_number INT ENCODE LZO,
+               metadata SUPER ENCODE LZO,
+               email VARCHAR(255) ENCODE LZO,
+               created_at TIMESTAMP ENCODE AZ64,
+               last_logged_in_at  TIMESTAMP ENCODE AZ64
+            )
+        """
+        result = parse(sql)
+        self.assertEqual(
+            result, {
+                "create table": {
+                    "replace": False,
+                    "name": "web.customers",
+                    "columns": [
+                        {"name": "customer_number", "type": {"int": {}}, "encode": "LZO"},
+                        {"name": "metadata", "type": "SUPER", "encode": "LZO"},
+                        {"name": "email", "type": {"varchar": 255}, "encode": "LZO"},
+                        {"name": "created_at", "type": {"timestamp": {}}, "encode": "AZ64"},
+                        {"name": "last_logged_in_at", "type": {"timestamp": {}}, "encode": "AZ64"}
+                    ]
+                }
+            }
+        )
+
+    def test_issue245b_single_sortkey(self):
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS web.customers
+            (
+               customer_number INT,
+               metadata SUPER,
+               email VARCHAR(255),
+               created_at TIMESTAMP,
+               last_logged_in_at  TIMESTAMP
+            )
+            SORTKEY (customer_number)
+        """
+        result = parse(sql)
+        self.assertEqual(
+            result, {
+                "create table": {
+                    "replace": False,
+                    "name": "web.customers",
+                    "columns": [
+                        {"name": "customer_number", "type": {"int": {}}},
+                        {"name": "metadata", "type": "SUPER"},
+                        {"name": "email", "type": {"varchar": 255}},
+                        {"name": "created_at", "type": {"timestamp": {}}},
+                        {"name": "last_logged_in_at", "type": {"timestamp": {}}}
+                    ],
+                    "sortkey": "customer_number"
+                }
+            }
+        )
+
+    def test_issue245c_multiple_sortkeys(self):
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS web.customers
+            (
+               customer_number INT,
+               metadata SUPER,
+               email VARCHAR(255),
+               created_at TIMESTAMP,
+               last_logged_in_at  TIMESTAMP
+            )
+            SORTKEY(customer_number, email)
+        """
+        result = parse(sql)
+        self.assertEqual(
+            result, {
+                "create table": {
+                    "replace": False,
+                    "name": "web.customers",
+                    "columns": [
+                        {"name": "customer_number", "type": {"int": {}}},
+                        {"name": "metadata", "type": "SUPER"},
+                        {"name": "email", "type": {"varchar": 255}},
+                        {"name": "created_at", "type": {"timestamp": {}}},
+                        {"name": "last_logged_in_at", "type": {"timestamp": {}}}
+                    ],
+                    "sortkey": [
+                        "customer_number", "email"
+                    ]
+                }
+            }
+        )
+
+    def test_issue245d_distkey(self):
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS web.customers
+            (
+               customer_number INT,
+               metadata SUPER,
+               email VARCHAR(255),
+               created_at TIMESTAMP,
+               last_logged_in_at  TIMESTAMP
+            )
+            DISTKEY(customer_number)
+        """
+        result = parse(sql)
+        self.assertEqual(
+            result, {
+                "create table": {
+                    "replace": False,
+                    "name": "web.customers",
+                    "columns": [
+                        {"name": "customer_number", "type": {"int": {}}},
+                        {"name": "metadata", "type": "SUPER"},
+                        {"name": "email", "type": {"varchar": 255}},
+                        {"name": "created_at", "type": {"timestamp": {}}},
+                        {"name": "last_logged_in_at", "type": {"timestamp": {}}}
+                    ],
+                    "distkey": "customer_number"
+                }
+            }
+        )
+
+    def test_issue245e_combination(self):
+        sql = f"""
+            CREATE TABLE IF NOT EXISTS web.customers
+            (
+               customer_number INT ENCODE LZO,
+               metadata SUPER ENCODE LZO,
+               email VARCHAR(255) ENCODE LZO,
+               created_at TIMESTAMP ENCODE AZ64,
+               last_logged_in_at  TIMESTAMP ENCODE AZ64
+            )
+            DISTKEY (customer_number)
+            SORTKEY(created_at)
+        """
+        result = parse(sql)
+        self.assertEqual(
+            result, {
+                "create table": {
+                    "replace": False,
+                    "name": "web.customers",
+                    "columns": [
+                        {"name": "customer_number", "type": {"int": {}}, "encode": "LZO"},
+                        {"name": "metadata", "type": "SUPER", "encode": "LZO"},
+                        {"name": "email", "type": {"varchar": 255}, "encode": "LZO"},
+                        {"name": "created_at", "type": {"timestamp": {}}, "encode": "AZ64"},
+                        {"name": "last_logged_in_at", "type": {"timestamp": {}}, "encode": "AZ64"}
+                    ],
+                    "distkey": "customer_number",
+                    "sortkey": "created_at"
+                }
+            }
+        )
+
     def test_issue149a_casting(self):
         # Ref: https://docs.aws.amazon.com/redshift/latest/dg/r_CAST_function.html#r_CAST_function-examples
         sql = "select '' :: varchar as placeholder from table"
