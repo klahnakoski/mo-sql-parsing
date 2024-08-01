@@ -12,14 +12,11 @@ import sys
 
 from mo_dots import is_data, is_null, literal_field, unliteral_field
 from mo_future import text, number_types, binary_type, flatten
-from mo_imports import expect
 from mo_parsing import *
 from mo_parsing import whitespaces
 from mo_parsing.utils import is_number, listwrap
 
 from mo_sql_parsing import simple_op
-
-unary_ops = expect("unary_ops")
 
 
 class Call(object):
@@ -118,11 +115,6 @@ def _chunk(values, size):
             acc = []
     if acc:
         yield acc
-
-
-def to_lambda(tokens):
-    params, op, expr = list(tokens)
-    return Call("lambda", [expr], {"params": list(params)})
 
 
 def to_json_operator(tokens):
@@ -242,6 +234,16 @@ binary_ops = {
     "COLLATE": "collate",
     ":": "get",
     "||": "concat",
+    "->": "json_get",
+    "->>": "json_get_text",
+    "#>": "json_path",
+    "#>>": "json_path_text",
+    "@>": "json_subsumes",
+    "<@": "json_subsumed_by",
+    "?": "json_contains",
+    "?|": "json_contains_any",
+    "?&": "json_contains_all",
+    "#-": "json_path_del",
     "*": "mul",
     "/": "div",
     "%": "mod",
@@ -279,7 +281,6 @@ binary_ops = {
     "not_simlilar_to": "not_similar_to",
     "or": "or",
     "and": "and",
-    "->": "lambda",
     ":=": "assign",
     "union": "union",
     "union_all": "union_all",
@@ -909,8 +910,9 @@ def no_dashes(tokens, start, string):
 
 digit = Char("0123456789")
 with whitespaces.NO_WHITESPACE:
-    ident_w_dash = Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
-    ident_w_dash_warning = Regex(ident_w_dash.__regex__()[1]).set_parser_name("identifier_with_dashes") / no_dashes
+    # repack the expression into a regex for faster parsing ident_w_dash
+    ident_w_dash = Regex((Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]).__regex__()[1])
+    ident_w_dash_warning = ident_w_dash.set_parser_name("identifier_with_dashes") / no_dashes
 
 simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
 sqlserver_local_ident = Word("@" + FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
