@@ -31,7 +31,8 @@ class Call(object):
         return f"{self.op}({self.args}, {self.kwargs})"
 
 
-IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
+IDENT_CHAR = Regex(r"(?>\S)[@_$0-9A-Za-zÀ-ÖØ-öø-\uFFFF]").expr.parser_config.include
+WHITE_CHAR = r"\s"
 FIRST_IDENT_CHAR = "".join(set(IDENT_CHAR) - set("0123456789"))
 SQL_NULL = Call("null", [], {})
 

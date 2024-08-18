@@ -1177,3 +1177,9 @@ class TestMySql(FuzzyTestCase):
             },
         }}
         self.assertEqual(result, expected)
+
+    def test_issue249(self):
+        sql = 'select * from public.delete→me;'
+        result = parse_mysql(sql)
+        expected = {'select': {'name': 'some_alias', 'value': 42}}
+        self.assertEqual(result, expected)
