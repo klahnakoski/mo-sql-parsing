@@ -237,12 +237,14 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + RB
         ) / to_json_call
 
+        single_quote_name = Regex(r"\'(\'\'|[^'])*\'") / (lambda x: single_literal(x)['literal'])
+
         alias = Optional((
             (
                 (
-                    AS + (ident("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                    AS + ((ident|single_quote_name)("name") + Optional(LB + delimited_list(ident("col")) + RB))
                     | (
-                        identifier("name")
+                          (identifier|single_quote_name)("name")
                         + Optional((LB + delimited_list(ident("col")) + RB) | (AS + delimited_list(identifier("col"))))
                     )
                 )
