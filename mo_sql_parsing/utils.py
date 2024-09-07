@@ -264,6 +264,10 @@ binary_ops = {
     "<=>": "eq!",  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
     "!=": "neq",
     "<>": "neq",
+    "!~*": "not_regexp_i",
+    "!~": "not_regexp",
+    "~*": "regexp_i",
+    "~": "regexp",
     "not in": "nin",
     "in": "in",
     "is_not": "neq",

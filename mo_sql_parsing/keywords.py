@@ -122,7 +122,10 @@ INDF = (
     # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
     keyword("is not distinct from").set_parser_name("ne!")
 )
-REGEXP = keyword("regexp").set_parser_name("rgx")
+REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
+NOT_REGEXP = Literal("!~").set_parser_name("not_regexp")
+REGEXP_I = Literal("~*").set_parser_name("regexp_i")
+NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 ASSIGN = Literal(":=").set_parser_name("assign")
 
@@ -324,8 +327,10 @@ precedence = {
     "lt": 5,
     "gt": 6,
     "eq": 7,
-    "rgx": 7,
-    "not_rgx": 7,
+    "regexp": 7,
+    "not_regexp": 7,
+    "regexp_i": 7,
+    "not_regexp_i": 7,
     "neq": 7,
     "missing": 7,
     "exists": 7,
@@ -409,8 +414,7 @@ KNOWN_OPS = [
     AND,
     OR,
     ASSIGN,
-    REGEXP,
-    NOT_REGEXP,
+    REGEXP | NOT_REGEXP | REGEXP_I | NOT_REGEXP_I,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]
