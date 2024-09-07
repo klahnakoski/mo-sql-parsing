@@ -348,3 +348,9 @@ class TestSqlServer(TestCase):
             ]},
         }}
         self.assertEqual(result, expected)
+
+    def test_issue247(self):
+        sql = "select 42 'some_alias'"
+        result = parse(sql)
+        expected = {'select': {'name': 'some_alias', 'value': 42}}
+        self.assertEqual(result, expected)

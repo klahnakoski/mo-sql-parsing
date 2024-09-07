@@ -890,7 +890,15 @@ class TestResources(TestCase):
 
     def test_118a(self):
         sql = "SELECT * FROM t3 UNION SELECT 3 AS 'a', 4 ORDER BY a"
-        self.assertRaises(Exception, parse, sql)
+        result = parse(sql)
+        expected = {
+            "from": {"union": [
+                {"from": "t3", "select": {"all_columns": {}}},
+                {"select": [{"value": 3, "name": "a"}, {"value": 4}]},
+            ]},
+            "orderby": {"value": "a"},
+        }
+        self.assertEqual(result, expected)
 
     def test_118b(self):
         sql = 'SELECT * FROM t3 UNION SELECT 3 AS "a", 4 ORDER BY a'
