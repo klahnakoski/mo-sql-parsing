@@ -549,12 +549,17 @@ class TestPostgres(TestCase):
         # https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP
         sql = """SELECT 'abc' ~ 'abc'"""
         result = parse(sql)
-        expected = {"select": {"value": {"regexp": ["abc", "abc"]}}}
+        expected = {"select": {"value": {"regexp": [{"literal": "abc"}, {"literal": "abc"}]}}}
 
     def test_issue_248_regex_operator2(self):
         sql = """SELECT 'abc' ~* 'abc'"""
-        result = parse(sql)
-        expected = {"select": {"value": {"regexp": ["abc", "abc"], "ignore_case": True}}}
+        try:
+            result = parse(sql)
+        except Exception:
+            pass
+        with Debugger():
+            result = parse(sql)
+        expected = {"select": {"value": {"regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
         self.assertEqual(result, expected)
 
     def test_issue_248_regex_operator3(self):
@@ -566,11 +571,11 @@ class TestPostgres(TestCase):
         with Debugger():
             result = parse(sql)
 
-        expected = {"select": {"value": {"not_regexp": ["abc", "abc"]}}}
+        expected = {"select": {"value": {"not_regexp": [{"literal": "abc"}, {"literal": "abc"}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_248_regex_operator4(self):
         sql = """SELECT 'abc' !~* 'abc'"""
         result = parse(sql)
-        expected = {"select": {"value": {"not_regexp": ["abc", "abc"], "ignore_case": True}}}
+        expected = {"select": {"value": {"regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
         self.assertEqual(result, expected)

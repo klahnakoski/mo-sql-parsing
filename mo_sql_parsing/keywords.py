@@ -86,6 +86,9 @@ WINDOW = keyword("window")
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
+NOT = keyword("not")
+
+
 # SIMPLE OPERATORS
 CONCAT = Literal("||").set_parser_name("concat")
 MUL = Literal("*").set_parser_name("mul")
@@ -123,7 +126,7 @@ INDF = (
     keyword("is not distinct from").set_parser_name("ne!")
 )
 REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
-NOT_REGEXP = Literal("!~").set_parser_name("not_regexp")
+NOT_REGEXP = (NOT + keyword("regexp") | Literal("!~")).set_parser_name("not_regexp")
 REGEXP_I = Literal("~*").set_parser_name("regexp_i")
 NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
@@ -150,7 +153,6 @@ END = keyword("end").suppress()
 ELSE = keyword("else").suppress()
 IN = keyword("in")
 IS = keyword("is")
-NOT = keyword("not")
 OR = keyword("or")
 LATERAL = keyword("lateral")
 PIVOT = keyword("pivot")
@@ -414,7 +416,10 @@ KNOWN_OPS = [
     AND,
     OR,
     ASSIGN,
-    REGEXP | NOT_REGEXP | REGEXP_I | NOT_REGEXP_I,
+    NOT_REGEXP_I,
+    NOT_REGEXP,
+    REGEXP_I,
+    REGEXP,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]

@@ -9,6 +9,7 @@
 
 import ast
 import sys
+from typing import List
 
 from mo_dots import is_data, is_null, literal_field, unliteral_field
 from mo_future import text, number_types, binary_type, flatten
@@ -22,7 +23,7 @@ from mo_sql_parsing import simple_op
 class Call(object):
     __slots__ = ["op", "args", "kwargs"]
 
-    def __init__(self, op, args, kwargs):
+    def __init__(self, op, args : List, kwargs: Dict):
         self.op = op
         self.args = args
         self.kwargs = kwargs
@@ -169,6 +170,10 @@ def to_json_operator(tokens):
             return Call("exists", tokens[0], {})
         else:
             return Call("missing", tokens[0], {})
+    elif op == "regexp_i":
+        return Call("regexp", [tokens[0], tokens[2]], {"ignore_case": True})
+    elif op == "not_regexp_i":
+        return Call("not_regexp", [tokens[0], tokens[2]], {"ignore_case": True})
 
     operands = [tokens[0], tokens[2]]
     binary_op = Call(op, operands, {})
