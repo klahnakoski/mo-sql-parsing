@@ -124,11 +124,11 @@ INDF = (
     # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
     keyword("is not distinct from").set_parser_name("ne!")
 )
-NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
-ASSIGN = Literal(":=").set_parser_name("assign")
 REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
 REGEXP_I = Literal("~*").set_parser_name("regexp_i")
 NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
+NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
+ASSIGN = Literal(":=").set_parser_name("assign")
 
 JSON_GET = Literal("->").set_parser_name("json_get")
 JSON_GET_TEXT = Literal("->>").set_parser_name("json_get_text")
@@ -394,8 +394,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EEQ | DEQ | IDF | INDF,
-    NEQ,
+    EEQ | NEQ | DEQ | IDF | INDF,
     AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
@@ -415,10 +414,7 @@ KNOWN_OPS = [
     AND,
     OR,
     ASSIGN,
-    NOT_REGEXP_I,
-    NOT_REGEXP,
-    REGEXP_I,
-    REGEXP,
+    NOT_REGEXP_I | NOT_REGEXP | REGEXP_I | REGEXP,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]
