@@ -76,6 +76,7 @@ INNER = keyword("inner")
 INTERSECT = keyword("intersect")
 INTERVAL = keyword("interval")
 INTO = keyword("into").suppress()
+IREGEXP = Literal("~*").set_parser_name("regexp_i")
 IS = keyword("is")
 JOIN = keyword("join")
 JSON_CONTAINS = Literal("?").set_parser_name("json_contains")
@@ -103,7 +104,7 @@ NEG = Literal("-").set_parser_name("neg")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 NOCASE = keyword("nocase")
 NOT = keyword("not")
-NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
+NOT_IREGEXP = Literal("!~*").set_parser_name("not_regexp_i")
 OFFSET = keyword("offset").suppress()
 ON = keyword("on").suppress()
 OR = keyword("or")
@@ -119,7 +120,6 @@ RECURSIVE = keyword("recursive").suppress()
 REFERENCES = keyword("references").suppress()
 _REGEXP = keyword("regexp")
 REGEXP = (_REGEXP | Literal("~")).set_parser_name("regexp")
-REGEXP_I = Literal("~*").set_parser_name("regexp_i")
 RIGHT = keyword("right")
 RLIKE = keyword("rlike")
 SAMPLE = keyword("sample").suppress()
@@ -398,7 +398,7 @@ KNOWN_OPS = [
     AND,
     OR,
     ASSIGN,
-    NOT_REGEXP_I | NOT_REGEXP | REGEXP_I | REGEXP,
+    NOT_IREGEXP | NOT_REGEXP | IREGEXP | REGEXP,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]
