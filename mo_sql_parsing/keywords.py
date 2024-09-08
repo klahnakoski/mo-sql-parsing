@@ -126,7 +126,7 @@ INDF = (
     keyword("is not distinct from").set_parser_name("ne!")
 )
 REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
-NOT_REGEXP = (NOT + keyword("regexp") | Literal("!~")).set_parser_name("not_regexp")
+NOT_REGEXP = Group(NOT + keyword("regexp") | Literal("!~")).set_parser_name("not_regexp")
 REGEXP_I = Literal("~*").set_parser_name("regexp_i")
 NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
@@ -190,7 +190,6 @@ NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
 NOT_IN = Group(NOT + IN).set_parser_name("nin")
-NOT_REGEXP = Group(NOT + REGEXP).set_parser_name("not_regexp")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
 _SIMILAR = keyword("similar")
@@ -396,7 +395,8 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EEQ | NEQ | DEQ | IDF | INDF,
+    EEQ | DEQ | IDF | INDF,
+    NEQ,
     AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),

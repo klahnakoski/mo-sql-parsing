@@ -577,5 +577,5 @@ class TestPostgres(TestCase):
     def test_issue_248_regex_operator4(self):
         sql = """SELECT 'abc' !~* 'abc'"""
         result = parse(sql)
-        expected = {"select": {"value": {"regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
+        expected = {"select": {"value": {"not_regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
         self.assertEqual(result, expected)
