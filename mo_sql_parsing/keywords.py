@@ -47,6 +47,7 @@ LIKE = keyword("like")
 LIMIT = keyword("limit").suppress()
 MINUS = keyword("minus")
 NATURAL = keyword("natural")
+NOT = keyword("not")
 OFFSET = keyword("offset").suppress()
 ON = keyword("on").suppress()
 ORDER = keyword("order").suppress()
@@ -86,6 +87,7 @@ WINDOW = keyword("window")
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
+
 # SIMPLE OPERATORS
 CONCAT = Literal("||").set_parser_name("concat")
 MUL = Literal("*").set_parser_name("mul")
@@ -122,7 +124,9 @@ INDF = (
     # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
     keyword("is not distinct from").set_parser_name("ne!")
 )
-REGEXP = keyword("regexp").set_parser_name("rgx")
+REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
+REGEXP_I = Literal("~*").set_parser_name("regexp_i")
+NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 ASSIGN = Literal(":=").set_parser_name("assign")
 
@@ -147,7 +151,6 @@ END = keyword("end").suppress()
 ELSE = keyword("else").suppress()
 IN = keyword("in")
 IS = keyword("is")
-NOT = keyword("not")
 OR = keyword("or")
 LATERAL = keyword("lateral")
 PIVOT = keyword("pivot")
@@ -185,7 +188,7 @@ NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
 NOT_IN = Group(NOT + IN).set_parser_name("nin")
-NOT_REGEXP = Group(NOT + REGEXP).set_parser_name("not_regexp")
+NOT_REGEXP = Group(NOT + keyword("regexp") | Literal("!~")).set_parser_name("not_regexp")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
 _SIMILAR = keyword("similar")
@@ -324,8 +327,10 @@ precedence = {
     "lt": 5,
     "gt": 6,
     "eq": 7,
-    "rgx": 7,
-    "not_rgx": 7,
+    "regexp": 7,
+    "not_regexp": 7,
+    "regexp_i": 7,
+    "not_regexp_i": 7,
     "neq": 7,
     "missing": 7,
     "exists": 7,
@@ -409,8 +414,7 @@ KNOWN_OPS = [
     AND,
     OR,
     ASSIGN,
-    REGEXP,
-    NOT_REGEXP,
+    NOT_REGEXP_I | NOT_REGEXP | REGEXP_I | REGEXP,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]
