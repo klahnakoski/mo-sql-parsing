@@ -40,7 +40,8 @@ CROSS = keyword("cross")
 DEQ = (
     # decisive equality
     # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
-    Literal("<=>").set_parser_name("eq!")
+    # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
+    (keyword("is distinct from") | Literal("<=>")).set_parser_name("eq!")
 )
 DESC = keyword("desc")
 DESCRIBE = keyword("describe")
@@ -48,9 +49,8 @@ DISTINCT = keyword("distinct")
 DIV = Literal("/").set_parser_name("div")
 EEQ = (
     # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
-    Literal("==")
-    | Literal("=")
-).set_parser_name("eq")
+    (Literal("==") | Literal("=")).set_parser_name("eq")
+)
 ELSE = keyword("else").suppress()
 END = keyword("end").suppress()
 EXCEPT = keyword("except")
@@ -64,11 +64,6 @@ GROUP = keyword("group").suppress()
 GT = Literal(">").set_parser_name("gt")
 GTE = Literal(">=").set_parser_name("gte")
 HAVING = keyword("having").suppress()
-IDF = (
-    # decisive equality
-    # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
-    keyword("is distinct from").set_parser_name("eq!")
-)
 ILIKE = keyword("ilike")
 IN = keyword("in")
 INDEX = keyword("index").suppress()
@@ -151,10 +146,27 @@ WITH = keyword("with").suppress()
 WITHIN = keyword("within").suppress()
 
 
-# COMPOUND KEYWORDS
-PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
+# COMPOUND KEYWORDS AND OPERATORS
+AT_TIME_ZONE = keyword("at time zone")
+CLUSTER_BY = Group(CLUSTER + BY).set_parser_name("cluster by")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
+GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
+IS_NOT = Group(IS + NOT).set_parser_name("is_not")
+NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
+NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
+NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
+NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
+NOT_IN = Group(NOT + IN).set_parser_name("nin")
+NOT_REGEXP = Group(NOT + _REGEXP | Literal("!~")).set_parser_name("not_regexp")
+NOT_SIMILAR_TO = Group(NOT + _SIMILAR + TO).set_parser_name("not_similar_to")
+ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
+PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
+PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
+SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
+SIMILAR_TO = Group(_SIMILAR + TO).set_parser_name("similar_to")
 STRAIGHT_JOIN = keyword("straight_join")
+UNION_ALL = (UNION + ALL).set_parser_name("union_all")
+WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 joins = (
     Literal(",").set_parser_name("cross_join") / "cross join"
     | (
@@ -167,26 +179,6 @@ joins = (
     | LATERAL + Optional(VIEW + Optional(OUTER))
     | (CROSS | OUTER) + APPLY
 ) / (lambda tokens: " ".join(tokens).lower())
-
-UNION_ALL = (UNION + ALL).set_parser_name("union_all")
-WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
-SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
-PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
-GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
-ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
-CLUSTER_BY = Group(CLUSTER + BY).set_parser_name("cluster by")
-
-# COMPOUND OPERATORS
-AT_TIME_ZONE = keyword("at time zone")
-NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
-NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
-NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
-NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
-NOT_IN = Group(NOT + IN).set_parser_name("nin")
-NOT_REGEXP = Group(NOT + _REGEXP | Literal("!~")).set_parser_name("not_regexp")
-IS_NOT = Group(IS + NOT).set_parser_name("is_not")
-SIMILAR_TO = Group(_SIMILAR + TO).set_parser_name("similar_to")
-NOT_SIMILAR_TO = Group(NOT + _SIMILAR + TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS
@@ -386,7 +378,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EEQ | NEQ | DEQ | IDF | INDF,
+    EEQ | NEQ | DEQ | INDF,
     AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
