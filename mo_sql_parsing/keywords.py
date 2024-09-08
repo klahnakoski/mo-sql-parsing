@@ -47,6 +47,7 @@ LIKE = keyword("like")
 LIMIT = keyword("limit").suppress()
 MINUS = keyword("minus")
 NATURAL = keyword("natural")
+NOT = keyword("not")
 OFFSET = keyword("offset").suppress()
 ON = keyword("on").suppress()
 ORDER = keyword("order").suppress()
@@ -86,8 +87,6 @@ WINDOW = keyword("window")
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
-NOT = keyword("not")
-
 
 # SIMPLE OPERATORS
 CONCAT = Literal("||").set_parser_name("concat")
@@ -125,12 +124,11 @@ INDF = (
     # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
     keyword("is not distinct from").set_parser_name("ne!")
 )
-REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
-NOT_REGEXP = Group(NOT + keyword("regexp") | Literal("!~")).set_parser_name("not_regexp")
-REGEXP_I = Literal("~*").set_parser_name("regexp_i")
-NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 ASSIGN = Literal(":=").set_parser_name("assign")
+REGEXP = (keyword("regexp") | Literal("~")).set_parser_name("regexp")
+REGEXP_I = Literal("~*").set_parser_name("regexp_i")
+NOT_REGEXP_I = Literal("!~*").set_parser_name("not_regexp_i")
 
 JSON_GET = Literal("->").set_parser_name("json_get")
 JSON_GET_TEXT = Literal("->>").set_parser_name("json_get_text")
@@ -189,6 +187,7 @@ NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
+NOT_REGEXP = Group(NOT + keyword("regexp") | Literal("!~")).set_parser_name("not_regexp")
 NOT_IN = Group(NOT + IN).set_parser_name("nin")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
