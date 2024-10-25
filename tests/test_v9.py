@@ -1,11 +1,9 @@
 from unittest import TestCase
 
 from mo_logs import logger
-from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import parse as _parse, format
-
 from tests.test_format_and_parse import EXCEPTION_MESSAGE
 
 
