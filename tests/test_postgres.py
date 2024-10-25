@@ -9,7 +9,7 @@
 
 from unittest import TestCase
 
-from mo_testing import assertAlmostEqual
+from mo_testing.fuzzytestcase import assertAlmostEqual
 
 from mo_sql_parsing import parse
 
