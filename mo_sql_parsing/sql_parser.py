@@ -437,15 +437,16 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             ),
         ))
 
-        join = (
+        join = Forward() / to_join_call
+        join << (
             pivot_join
             | unpivot_join
             | (
                 Group(joins)("op")
                 + table_source("join")
+                + Optional(Group(join)("child"))
                 + Optional((ON + expression("on")) | (USING + expression("using")))
             )
-            / to_join_call
         )
 
         tops = (

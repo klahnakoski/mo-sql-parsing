@@ -980,3 +980,32 @@ class TestSnowflake(TestCase):
             "window": {"name": "item_window", "value": {"partitionby": "product"}},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_254(self):
+        sql = """select DATEADD(DAY, SEQ4(), DATEADD('year', -2, last_day(CURRENT_DATE(),'year'))) AS MY_DATE FROM TABLE(GENERATOR(ROWCOUNT=>(366*2)))"""
+        result = parse(sql, calls=normal_op)
+        expected = {
+            "from": {
+                "args": [{"op": "generator", "kwargs": {"ROWCOUNT": {"op": "mul", "args": [366, 2]}}}],
+                "op": "table",
+            },
+            "select": {
+                "name": "MY_DATE",
+                "value": {
+                    "op": "dateadd",
+                    "args": [
+                        "DAY",
+                        {"op": "seq4"},
+                        {
+                            "op": "dateadd",
+                            "args": [
+                                {"literal": "year"},
+                                -2,
+                                {"op": "last_day", "args": [{"op": "current_date"}, {"literal": "year"}]},
+                            ],
+                        },
+                    ],
+                },
+            },
+        }
+        self.assertEqual(result, expected)
