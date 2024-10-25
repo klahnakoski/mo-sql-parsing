@@ -496,14 +496,20 @@ def to_match_expr(tokens):
 
 def to_join_call(tokens):
     op = " ".join(tokens["op"])
-    if tokens["join"]["name"]:
-        output = {op: {"name": tokens["join"]["name"], "value": tokens["join"]["value"]}}
+    join = tokens["join"]
+    if join["name"]:
+        output = {op: {"name": join["name"], "value": join["value"]}}
+    elif op:
+        output = {op: join}
     else:
-        output = {op: tokens["join"]}
+        output = tokens[0]
 
     output["on"] = tokens["on"]
     output["using"] = tokens["using"]
-    return output
+
+    if tokens["child"]:
+        return [output, *list(tokens["child"])]
+    return [output]
 
 
 def to_expression_call(tokens):
