@@ -14,7 +14,7 @@ from mo_dots import split_field
 from mo_future import first, is_text, string_types, text
 from mo_parsing import listwrap
 
-from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
+from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence, pivot_keywords
 from mo_sql_parsing.utils import binary_ops, is_set_op
 
 MAX_PRECEDENCE = 100
@@ -511,6 +511,19 @@ class Formatter:
     def _distinct_on(self, json, prec):
         return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
+    def _pivot(self, json, prec):
+        op = first(json.keys() & pivot_keywords)
+        pivot = json[op]
+        value = self.dispatch(pivot["aggregate"])
+        for_ = self.dispatch(pivot["for"])
+        in_ = self.dispatch(pivot["in"])
+        sql = f"PIVOT ({value} FOR {for_} IN {in_})"
+        if "name" in pivot:
+            name = pivot["name"]
+            return f"{sql} AS {name}"
+        else:
+            return sql
+
     def _join_on(self, json, prec):
         detected_join = join_keywords & set(json.keys())
         if len(detected_join) == 0:
@@ -651,7 +664,7 @@ class Formatter:
         return f"SELECT DISTINCT {param}"
 
     def from_(self, json, prec):
-        is_join = False
+        joiner = ", "
         from_ = json["from"]
         if isinstance(from_, dict) and "literal" in from_:
             content = ", ".join(self._literal(row) for row in from_["literal"])
@@ -664,11 +677,13 @@ class Formatter:
         parts = []
         for v in from_:
             if join_keywords & set(v):
-                is_join = True
+                joiner = " "
                 parts.append(self._join_on(v, precedence["from"] - 1))
+            elif pivot_keywords & set(v):
+                joiner = " "
+                parts.append(self._pivot(v, precedence["from"] - 1))
             else:
                 parts.append(self.dispatch(v, precedence["from"] - 1))
-        joiner = " " if is_join else ", "
         rest = joiner.join(parts)
         return f"FROM {rest}"
 

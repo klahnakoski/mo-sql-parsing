@@ -275,6 +275,11 @@ join_keywords = {
     "outer apply",
 }
 
+pivot_keywords = {
+    "pivot",
+    "unpivot",
+}
+
 precedence = {
     # https://www.sqlite.org/lang_expr.html
     "literal": -1,

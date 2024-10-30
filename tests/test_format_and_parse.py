@@ -1762,3 +1762,20 @@ order by number_sites desc"""
             "from": "public.persentil",
         }
         self.verify_formatting(expected_sql, expected_json)
+
+    def test_issue_255_pivot(self):
+        sql = """SELECT val_1, val_2 FROM tab PIVOT (SUM(col_a) FOR col_b IN ('val_1', 'val_2')) AS p"""
+        #       "SELECT val_1, val_2 FROM tab, PIVOT (SUM(col_a) FOR col_b IN ('val_1', 'val_2') AS p"
+        json = {
+            "select": [{"value": "val_1"}, {"value": "val_2"}],
+            "from": [
+                "tab",
+                {"pivot": {
+                    "aggregate": {"sum": "col_a"},
+                    "for": "col_b",
+                    "in": {"literal": ["val_1", "val_2"]},
+                    "name": "p"
+                }},
+            ],
+        }
+        self.verify_formatting(sql, json)
