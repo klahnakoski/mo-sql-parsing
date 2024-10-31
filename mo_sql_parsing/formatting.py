@@ -178,6 +178,8 @@ class Formatter:
                 return self._literal(json, prec)
             elif "substring" in json:
                 return self._substring(json, prec)
+            elif "generator" in json:
+                return self._generator(json, prec)
             elif "group_concat" in json:
                 return self._group_concat(json, prec)
             elif "value" in json:
@@ -361,6 +363,11 @@ class Formatter:
             # if substring does not contain from and for,  compose normal substring function
             params = ", ".join(self.dispatch(p) for p in json["substring"])
             return f"SUBSTRING({params})"
+
+    def _generator(self, json, prec):
+        # TODO: replace with function-using-keywords
+        rowcount = self.dispatch(json["rowcount"])
+        return f"GENERATOR(ROWCOUNT=>{rowcount})"
 
     def _group_concat(self, json, prec):
         acc = ["group_concat(", self.dispatch(json["group_concat"]), " "]

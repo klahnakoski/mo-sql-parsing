@@ -305,7 +305,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         one_param = (
             # KEYWORD PARAMETERS?
             # https://docs.snowflake.com/en/sql-reference/functions/generator.html
-            Group(ident + Literal("=>").suppress() + Group(expression))("kwargs")
+            Group(ident/ (lambda t: t[0].lower()) + Literal("=>").suppress() + Group(expression))("kwargs")
             / to_kwarg
         ) | Group(expression)("params")
 
