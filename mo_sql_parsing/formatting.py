@@ -110,7 +110,8 @@ unordered_clauses = [
     "select_distinct",
     "select",
     "from",
-    "pivot", "unpivot",
+    "pivot",
+    "unpivot",
     "where",
     "groupby",
     "having",
@@ -513,16 +514,17 @@ class Formatter:
         return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
     def pivot(self, json, prec):
-        return self._pivot("PIVOT", json['pivot'])
+        pivot = json["pivot"]
+        return self._pivot("PIVOT", pivot, self.dispatch(pivot["aggregate"]))
 
     def unpivot(self, json, prec):
-        return self._pivot("UNPIVOT", json['unpivot'])
+        pivot = json["unpivot"]
+        return self._pivot("UNPIVOT", pivot, self.dispatch(pivot["value"]))
 
-    def _pivot(self, op, pivot):
-        value = self.dispatch(pivot["aggregate"])
+    def _pivot(self, op, pivot, value):
         for_ = self.dispatch(pivot["for"])
         in_ = self.dispatch(pivot["in"])
-        sql = f"PIVOT ({value} FOR {for_} IN {in_})"
+        sql = f"{op} ({value} FOR {for_} IN {in_})"
         if "name" in pivot:
             name = pivot["name"]
             return f"{sql} AS {name}"
@@ -688,7 +690,7 @@ class Formatter:
                 joiner = " "
                 parts.append(self._join_on(v, precedence["from"] - 1))
             else:
-                parts.append(value = self.dispatch(v, precedence["from"] - 1))
+                parts.append(self.dispatch(v, precedence["from"] - 1))
         rest = joiner.join(parts)
         return f"FROM {rest}"
 

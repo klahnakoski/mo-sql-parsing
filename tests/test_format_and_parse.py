@@ -11,7 +11,7 @@
 import re
 from unittest import TestCase
 
-from mo_logs import logger
+from mo_logs import logger, Except
 from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import format, parse
@@ -43,6 +43,7 @@ class TestFormatAndParse(TestCase):
             new_json = parse(new_sql)
             self.assertEqual(new_json, expected_json)
         except Exception as cause:
+            cause = Except.wrap(cause)
             logger.error(
                 EXCEPTION_MESSAGE,
                 expected_sql=expected_sql,
@@ -1822,5 +1823,19 @@ order by number_sites desc"""
                 "name": "pvt",
             },
             "orderby": {"value": "pvt.VendorID"},
+        }
+        self.verify_formatting(sql, json)
+
+    def test_issue_255_unpivot(self):
+        sql = """SELECT col_a, col_b FROM tab UNPIVOT (col_a FOR col_b IN (col_1, col_2)) AS u"""
+        json = {
+            "select": [{"value": "col_a"}, {"value": "col_b"}],
+            "from": "tab",
+            "unpivot": {
+                "value": "col_a",
+                "for": "col_b",
+                "in": ["col_1", "col_2"],
+                "name": "u",
+            },
         }
         self.verify_formatting(sql, json)
