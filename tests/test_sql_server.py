@@ -204,10 +204,8 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {
             "select": {"all_columns": {}},
-            "from": [
-                "p",
-                {"pivot": {"name": "pvt", "aggregate": {"count": "id"}, "for": "E", "in": [250, 251, 256, 257, 260]}},
-            ],
+            "from": "p",
+            "pivot": {"name": "pvt", "aggregate": {"count": "id"}, "for": "E", "in": [250, 251, 256, 257, 260]},
         }
         self.assertEqual(result, expected)
 
@@ -305,7 +303,7 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {"create_procedure": {
             "name": "k",
-            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}}, }}},
+            "body": {"block": {"declare": {"default": 42, "name": "@MYVARIABLE", "type": {"int": {}},}}},
         }}
         self.assertEqual(result, expected)
 
@@ -352,5 +350,5 @@ class TestSqlServer(TestCase):
     def test_issue247(self):
         sql = "select 42 'some_alias'"
         result = parse(sql)
-        expected = {'select': {'name': 'some_alias', 'value': 42}}
+        expected = {"select": {"name": "some_alias", "value": 42}}
         self.assertEqual(result, expected)

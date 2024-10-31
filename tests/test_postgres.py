@@ -570,7 +570,6 @@ class TestPostgres(TestCase):
         expected = {"select": {"value": {"not_regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
         self.assertEqual(result, expected)
 
-
     def test_issue_253_joins(self):
         sql = """select t1.col1, t2.col2, t3.col3
             from table1 t1
@@ -582,9 +581,9 @@ class TestPostgres(TestCase):
         expected = {
             "from": [
                 {"name": "t1", "value": "table1"},
-                {"join": {'name': 't2', "value": "table2"}, "on": {"eq": ["t1.id", "t2.id"]}},
-                {"left join": {'name': 't3', "value": "table3"}, "on": {"eq": ["t3.id", "t2.id"]}}
+                {"join": {"name": "t2", "value": "table2"}, "on": {"eq": ["t1.id", "t2.id"]}},
+                {"left join": {"name": "t3", "value": "table3"}, "on": {"eq": ["t3.id", "t2.id"]}},
             ],
-            "select": [{"value": "t1.col1"}, {"value": "t2.col2"}, {"value": "t3.col3"}]
+            "select": [{"value": "t1.col1"}, {"value": "t2.col2"}, {"value": "t3.col3"}],
         }
         assertAlmostEqual(result, expected)

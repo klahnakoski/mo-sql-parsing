@@ -72,4 +72,3 @@ class TestOracle(TestCase):
             }},
         }
         self.assertEqual(result, expected)
-

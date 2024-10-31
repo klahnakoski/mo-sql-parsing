@@ -30,7 +30,6 @@ class TestSoQueries(TestCase):
 
     @skip("slow")
     def test_so_queries(self):
-
         def careful_parse(sql):
             if not sql:
                 return

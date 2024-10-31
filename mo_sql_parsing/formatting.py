@@ -110,6 +110,7 @@ unordered_clauses = [
     "select_distinct",
     "select",
     "from",
+    "pivot", "unpivot",
     "where",
     "groupby",
     "having",
@@ -511,9 +512,13 @@ class Formatter:
     def _distinct_on(self, json, prec):
         return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
-    def _pivot(self, json, prec):
-        op = first(json.keys() & pivot_keywords)
-        pivot = json[op]
+    def pivot(self, json, prec):
+        return self._pivot("PIVOT", json['pivot'])
+
+    def unpivot(self, json, prec):
+        return self._pivot("UNPIVOT", json['unpivot'])
+
+    def _pivot(self, op, pivot):
         value = self.dispatch(pivot["aggregate"])
         for_ = self.dispatch(pivot["for"])
         in_ = self.dispatch(pivot["in"])
@@ -627,11 +632,14 @@ class Formatter:
             if s == "*":
                 acc.append("*")
                 continue
-            all_col = s.get("all_columns")
-            if all_col or isinstance(all_col, dict):
-                acc.append(self.all_columns(s, precedence["select"]))
-            else:
+            if isinstance(s, str):
                 acc.append(self.dispatch(s, precedence["select"]))
+            else:
+                all_col = s.get("all_columns")
+                if all_col or isinstance(all_col, dict):
+                    acc.append(self.all_columns(s, precedence["select"]))
+                else:
+                    acc.append(self.dispatch(s, precedence["select"]))
         param = ", ".join(acc)
         if "top" in json:
             top = self.dispatch(json["top"])
@@ -679,11 +687,8 @@ class Formatter:
             if join_keywords & set(v):
                 joiner = " "
                 parts.append(self._join_on(v, precedence["from"] - 1))
-            elif pivot_keywords & set(v):
-                joiner = " "
-                parts.append(self._pivot(v, precedence["from"] - 1))
             else:
-                parts.append(self.dispatch(v, precedence["from"] - 1))
+                parts.append(value = self.dispatch(v, precedence["from"] - 1))
         rest = joiner.join(parts)
         return f"FROM {rest}"
 
