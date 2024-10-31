@@ -40,7 +40,6 @@ class TestBigSql(TestCase):
         with Timer("parse long expression"):
             result = parse(crazy)
 
-
     def test_issue_103b(self):
         #        0         1         2         3         4         5         6         7         8         9
         #        012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789

@@ -1762,3 +1762,95 @@ order by number_sites desc"""
             "from": "public.persentil",
         }
         self.verify_formatting(expected_sql, expected_json)
+
+    def test_issue_255_pivot(self):
+        sql = """SELECT val_1, val_2 FROM tab PIVOT (SUM(col_a) FOR col_b IN ('val_1', 'val_2')) AS p"""
+        #       "SELECT val_1, val_2 FROM tab, PIVOT (SUM(col_a) FOR col_b IN ('val_1', 'val_2') AS p"
+        json = {
+            "select": [{"value": "val_1"}, {"value": "val_2"}],
+            "from": "tab",
+            "pivot": {
+                "aggregate": {"sum": "col_a"},
+                "for": "col_b",
+                "in": {"literal": ["val_1", "val_2"]},
+                "name": "p",
+            },
+        }
+        self.verify_formatting(sql, json)
+
+    def test_issue_255_pivot_w_order(self):
+        # from https://learn.microsoft.com/en-us/sql/t-sql/queries/from-using-pivot-and-unpivot?view=sql-server-ver16
+        sql = """ 
+        SELECT VendorID,
+            [250] AS Emp1,
+            [251] AS Emp2,
+            [256] AS Emp3,
+            [257] AS Emp4,
+            [260] AS Emp5
+        FROM
+        (
+            SELECT PurchaseOrderID,
+            EmployeeID, VendorID
+            FROM Purchasing.PurchaseOrderHeader
+        ) p
+        PIVOT
+        (
+            COUNT (PurchaseOrderID)
+            FOR EmployeeID IN ([250], [251], [256], [257], [260])
+        ) AS pvt
+        ORDER BY pvt.VendorID;"""
+        json = {
+            "select": [
+                {"value": "VendorID"},
+                {"value": "250", "name": "Emp1"},
+                {"value": "251", "name": "Emp2"},
+                {"value": "256", "name": "Emp3"},
+                {"value": "257", "name": "Emp4"},
+                {"value": "260", "name": "Emp5"},
+            ],
+            "from": {
+                "value": {
+                    "select": [{"value": "PurchaseOrderID"}, {"value": "EmployeeID"}, {"value": "VendorID"}],
+                    "from": "Purchasing.PurchaseOrderHeader",
+                },
+                "name": "p",
+            },
+            "pivot": {
+                "aggregate": {"count": "PurchaseOrderID"},
+                "for": "EmployeeID",
+                "in": [250, 251, 256, 257, 260],
+                "name": "pvt",
+            },
+            "orderby": {"value": "pvt.VendorID"},
+        }
+        self.verify_formatting(sql, json)
+
+    def test_issue_255_unpivot(self):
+        sql = """SELECT col_a, col_b FROM tab UNPIVOT (col_a FOR col_b IN (col_1, col_2)) AS u"""
+        json = {
+            "select": [{"value": "col_a"}, {"value": "col_b"}],
+            "from": "tab",
+            "unpivot": {
+                "value": "col_a",
+                "for": "col_b",
+                "in": ["col_1", "col_2"],
+                "name": "u",
+            },
+        }
+        self.verify_formatting(sql, json)
+
+    def test_issue_255_unpivot2(self):
+        sql = """SELECT col_a, col_b FROM tab UNPIVOT EXCLUDE NULLS (col_a FOR col_b IN (col_1, col_2)) AS u"""
+        json = {
+            "select": [{"value": "col_a"}, {"value": "col_b"}],
+            "from": "tab",
+            "unpivot": {
+                "nulls": False,
+                "value": "col_a",
+                "for": "col_b",
+                "in": ["col_1", "col_2"],
+                "name": "u",
+            },
+        }
+        self.verify_formatting(sql, json)
+

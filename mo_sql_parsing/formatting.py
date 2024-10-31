@@ -14,7 +14,7 @@ from mo_dots import split_field
 from mo_future import first, is_text, string_types, text
 from mo_parsing import listwrap
 
-from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
+from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence, pivot_keywords
 from mo_sql_parsing.utils import binary_ops, is_set_op
 
 MAX_PRECEDENCE = 100
@@ -110,6 +110,8 @@ unordered_clauses = [
     "select_distinct",
     "select",
     "from",
+    "pivot",
+    "unpivot",
     "where",
     "groupby",
     "having",
@@ -511,6 +513,28 @@ class Formatter:
     def _distinct_on(self, json, prec):
         return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
+    def pivot(self, json, prec):
+        pivot = json["pivot"]
+        return self._pivot("PIVOT", pivot, self.dispatch(pivot["aggregate"]))
+
+    def unpivot(self, json, prec):
+        pivot = json["unpivot"]
+        if "nulls" in pivot:
+            nulls = " INCLUDE NULLS" if pivot["nulls"] else " EXCLUDE NULLS"
+        else:
+            nulls = ""
+        return self._pivot(f"UNPIVOT{nulls}", pivot, self.dispatch(pivot["value"]))
+
+    def _pivot(self, op, pivot, value):
+        for_ = self.dispatch(pivot["for"])
+        in_ = self.dispatch(pivot["in"])
+        sql = f"{op} ({value} FOR {for_} IN {in_})"
+        if "name" in pivot:
+            name = pivot["name"]
+            return f"{sql} AS {name}"
+        else:
+            return sql
+
     def _join_on(self, json, prec):
         detected_join = join_keywords & set(json.keys())
         if len(detected_join) == 0:
@@ -614,11 +638,14 @@ class Formatter:
             if s == "*":
                 acc.append("*")
                 continue
-            all_col = s.get("all_columns")
-            if all_col or isinstance(all_col, dict):
-                acc.append(self.all_columns(s, precedence["select"]))
-            else:
+            if isinstance(s, str):
                 acc.append(self.dispatch(s, precedence["select"]))
+            else:
+                all_col = s.get("all_columns")
+                if all_col or isinstance(all_col, dict):
+                    acc.append(self.all_columns(s, precedence["select"]))
+                else:
+                    acc.append(self.dispatch(s, precedence["select"]))
         param = ", ".join(acc)
         if "top" in json:
             top = self.dispatch(json["top"])
@@ -651,7 +678,7 @@ class Formatter:
         return f"SELECT DISTINCT {param}"
 
     def from_(self, json, prec):
-        is_join = False
+        joiner = ", "
         from_ = json["from"]
         if isinstance(from_, dict) and "literal" in from_:
             content = ", ".join(self._literal(row) for row in from_["literal"])
@@ -664,11 +691,10 @@ class Formatter:
         parts = []
         for v in from_:
             if join_keywords & set(v):
-                is_join = True
+                joiner = " "
                 parts.append(self._join_on(v, precedence["from"] - 1))
             else:
                 parts.append(self.dispatch(v, precedence["from"] - 1))
-        joiner = " " if is_join else ", "
         rest = joiner.join(parts)
         return f"FROM {rest}"
 

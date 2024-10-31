@@ -275,6 +275,11 @@ join_keywords = {
     "outer apply",
 }
 
+pivot_keywords = {
+    "pivot",
+    "unpivot",
+}
+
 precedence = {
     # https://www.sqlite.org/lang_expr.html
     "literal": -1,
@@ -348,7 +353,9 @@ precedence = {
     "where": 33,
     "groupby": 34,
     "window": 35,
-    "having": 35,
+    "pivot": 36,
+    "unpivot": 36,
+    "having": 37,
     "union": 40,
     "union_all": 40,
     "except": 40,

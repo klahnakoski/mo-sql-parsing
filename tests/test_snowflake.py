@@ -296,17 +296,13 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": [
-                {"name": "monthly_sales", "value": {"select": {"all_columns": {}}, "from": "monthly_sales_table"}},
-                {
-                    "pivot": {
-                        "name": "p",
-                        "aggregate": {"sum": "amount"},
-                        "for": "month",
-                        "in": {"literal": ["JAN", "FEB", "MAR", "APR"]},
-                    },
-                },
-            ],
+            "from": {"name": "monthly_sales", "value": {"select": {"all_columns": {}}, "from": "monthly_sales_table"}},
+            "pivot": {
+                "name": "p",
+                "aggregate": {"sum": "amount"},
+                "for": "month",
+                "in": {"literal": ["JAN", "FEB", "MAR", "APR"]},
+            },
             "select": {"all_columns": {}},
         }
 
@@ -319,10 +315,8 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": [
-                "monthly_sales",
-                {"unpivot": {"value": "sales", "for": "month", "in": ["jan", "feb", "mar", "april"]}},
-            ],
+            "from": "monthly_sales",
+            "unpivot": {"value": "sales", "for": "month", "in": ["jan", "feb", "mar", "april"]},
             "orderby": {"value": "empid"},
             "select": {"all_columns": {}},
         }

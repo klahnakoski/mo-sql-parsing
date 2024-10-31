@@ -188,14 +188,12 @@ class TestAthena(TestCase):
         UNPIVOT(sales FOR quarter IN (Q1 as 'Q1_a', Q2 as 'Q2_a', Q3, Q4))"""
         result = parse(sql)
         expected = {
-            "from": [
-                "Produce",
-                {"unpivot": {
-                    "for": "quarter",
-                    "in": [{"name": "Q1_a", "value": "Q1"}, {"name": "Q2_a", "value": "Q2"}, "Q3", "Q4",],
-                    "value": "sales",
-                }},
-            ],
+            "from": "Produce",
+            "unpivot": {
+                "for": "quarter",
+                "in": [{"name": "Q1_a", "value": "Q1"}, {"name": "Q2_a", "value": "Q2"}, "Q3", "Q4",],
+                "value": "sales",
+            },
             "select": {"all_columns": {}},
             "with": {
                 "name": "Produce",

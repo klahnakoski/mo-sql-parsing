@@ -237,14 +237,14 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + RB
         ) / to_json_call
 
-        single_quote_name = Regex(r"\'(\'\'|[^'])*\'") / (lambda x: single_literal(x)['literal'])
+        single_quote_name = Regex(r"\'(\'\'|[^'])*\'") / (lambda x: single_literal(x)["literal"])
 
         alias = Optional((
             (
                 (
-                    AS + ((ident|single_quote_name)("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                    AS + ((ident | single_quote_name)("name") + Optional(LB + delimited_list(ident("col")) + RB))
                     | (
-                          (identifier|single_quote_name)("name")
+                        (identifier | single_quote_name)("name")
                         + Optional((LB + delimited_list(ident("col")) + RB) | (AS + delimited_list(identifier("col"))))
                     )
                 )
@@ -403,7 +403,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
 
         table_source = Forward()
 
-        pivot_join = Group(assign(
+        pivot_join = assign(
             "pivot",
             (
                 LB
@@ -412,10 +412,10 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                 + RB
                 + alias
             ),
-        ))
+        )
 
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unpivot_operator
-        unpivot_join = Group(assign(
+        unpivot_join = assign(
             "unpivot",
             (
                 Optional(keyword("EXCLUDE NULLS")("nulls") / False | keyword("INCLUDE NULLS")("nulls") / True)
@@ -435,18 +435,14 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
                 + RB
                 + alias
             ),
-        ))
+        )
 
         join = Forward() / to_join_call
         join << (
-            pivot_join
-            | unpivot_join
-            | (
-                Group(joins)("op")
-                + table_source("join")
-                + Optional(Group(join)("child"))
-                + Optional((ON + expression("on")) | (USING + expression("using")))
-            )
+            Group(joins)("op")
+            + table_source("join")
+            + Optional(Group(join)("child"))
+            + Optional((ON + expression("on")) | (USING + expression("using")))
         )
 
         tops = (
@@ -498,6 +494,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + into
             + Optional((FROM + delimited_list(table_source) + ZeroOrMore(join))("from"))
             + Optional(WHERE + expression("where"))
+            + Optional(pivot_join)
+            + Optional(unpivot_join)
             + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
             + (
                 Optional(HAVING + expression("having"))
@@ -708,10 +706,8 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + Optional(AS.suppress() + infix_notation(query, [])("query"))
             + Optional(CLUSTER_BY.suppress() + LB + delimited_list(identifier) + RB)("cluster_by")
             + ZeroOrMore(
-                assign("sortkey", LB + delimited_list(identifier) + RB)
-                | assign("distkey", LB + identifier + RB)
+                assign("sortkey", LB + delimited_list(identifier) + RB) | assign("distkey", LB + identifier + RB)
             )
-
         )("create table")
 
         definer = Optional(keyword("definer").suppress() + EQ + identifier("definer"))
