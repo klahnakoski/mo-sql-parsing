@@ -16,7 +16,7 @@ The objective is to convert SQL queries to JSON-izable parse trees. This origina
 
 ## Project Status
 
-December 2023 -  I continue to resolve issues as they are raised. There are [over 1100 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that cover most SQL for most databases, with limited DML and UDF support, including:
+October 2024 -  I continue to resolve issues as they are raised. There are [over 1200 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that cover most SQL for most databases, with limited DML and UDF support, including:
 
   * inner queries, 
   * with clauses, 
@@ -158,6 +158,40 @@ for select in listwrap(parsed_result.get('select')):
 ```
 
 ## Version Changes, Features
+
+### Version 11
+
+*October 2024*
+
+The `PIVOT` clause has been promoted to top-level. Instead of being part of the joins found in the `FROM` clause, it is now a sibling to `SELECT`.
+
+```
+>>> from mo_sql_parsing import parse
+>>> parse("SELECT * FROM table PIVOT (SUM(x) FOR y IN (1, 2, 3))")
+```
+
+now emits
+
+```
+{
+    'select': {'all_columns': {}}, 
+    'from': 'table', 
+    'pivot': {'sum': 'x', 'for': 'y', 'in': [1, 2, 3]}
+}
+```
+
+instead of
+
+```
+{
+    'select': {'all_columns': {}}, 
+    'from': [
+        'table', 
+        'pivot': {'sum': 'x', 'for': 'y', 'in': [1, 2, 3]}
+    ]
+}
+```
+
 
 
 ### Version 10
