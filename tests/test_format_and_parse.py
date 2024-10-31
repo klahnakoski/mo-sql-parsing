@@ -1854,3 +1854,19 @@ order by number_sites desc"""
         }
         self.verify_formatting(sql, json)
 
+    def test_issue_254(self):
+        sql = """select DATEADD(DAY, SEQ4(), DATEADD('year', -2, last_day(CURRENT_DATE(),'year'))) AS MY_DATE FROM TABLE(GENERATOR(ROWCOUNT=>(366*2)))"""
+        json = {
+            "select": {
+                "value": {
+                    "dateadd": [
+                        "DAY",
+                        {"seq4": {}},
+                        {"dateadd": ["year", -2, {"last_day": [{"current_date": {}}, "year"]}]}
+                    ]
+                },
+                "name": "MY_DATE"
+            },
+            "from": {"table": {"generator": {}, "rowcount": {'mul':[366, 2]}}}
+        }
+        self.verify_formatting(sql, json)

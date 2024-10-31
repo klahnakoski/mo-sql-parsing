@@ -1003,3 +1003,4 @@ class TestSnowflake(TestCase):
             },
         }
         self.assertEqual(result, expected)
+
