@@ -519,7 +519,11 @@ class Formatter:
 
     def unpivot(self, json, prec):
         pivot = json["unpivot"]
-        return self._pivot("UNPIVOT", pivot, self.dispatch(pivot["value"]))
+        if "nulls" in pivot:
+            nulls = " INCLUDE NULLS" if pivot["nulls"] else " EXCLUDE NULLS"
+        else:
+            nulls = ""
+        return self._pivot(f"UNPIVOT{nulls}", pivot, self.dispatch(pivot["value"]))
 
     def _pivot(self, op, pivot, value):
         for_ = self.dispatch(pivot["for"])
