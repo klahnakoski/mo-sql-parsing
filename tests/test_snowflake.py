@@ -980,7 +980,7 @@ class TestSnowflake(TestCase):
         result = parse(sql, calls=normal_op)
         expected = {
             "from": {
-                "args": [{"op": "generator", "kwargs": {"ROWCOUNT": {"op": "mul", "args": [366, 2]}}}],
+                "args": [{"op": "generator", "kwargs": {"rowcount": {"op": "mul", "args": [366, 2]}}}],
                 "op": "table",
             },
             "select": {
@@ -1003,3 +1003,4 @@ class TestSnowflake(TestCase):
             },
         }
         self.assertEqual(result, expected)
+
