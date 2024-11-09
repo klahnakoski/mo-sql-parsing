@@ -2,8 +2,7 @@
 
 [![PyPI Latest Release](https://img.shields.io/pypi/v/mo-sql-parsing.svg)](https://pypi.org/project/mo-sql-parsing/)
 [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing)
-[![Downloads](https://pepy.tech/badge/mo-sql-parsing/month)](https://pepy.tech/project/mo-sql-parsing)
-
+[![PyPI Downloads](https://static.pepy.tech/badge/mo-sql-parsing/month)](https://www.pepy.tech/projects/mo-sql-parsing)
 
 Parse SQL into JSON so we can translate it for other datastores!
 
