@@ -237,7 +237,7 @@ class TestSimple(TestCase):
             {"select": {"all_columns": {}}, "from": "a"},
             {"select": {"all_columns": {}}, "from": "b"},
         ]})
-        expected = "SELECT * FROM a UNION SELECT * FROM b"
+        expected = "SELECT * FROM a\nUNION\nSELECT * FROM b"
         self.assertEqual(result, expected)
 
     def test_limit(self):
@@ -404,7 +404,7 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
         query = (
-            """SELECT first_name FROM Professionals UNION SELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
+            """SELECT first_name FROM Professionals\nUNION\nSELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
         )
         parse_result = parse(query)
         format_result = format(parse_result)
@@ -833,7 +833,12 @@ class TestSimple(TestCase):
         result = format(parse(sql))
         self.assertEqual(result, sql)
 
-    def test_issue_233_format_union(self):
+    def test_issue_233_format_union_all(self):
         sql = """WITH table_test AS (\nSELECT public.categories.string_agg AS string_agg FROM public.categories\n) SELECT * FROM table_test\nUNION ALL\nSELECT * FROM table_test"""
+        result = format(parse(sql))
+        self.assertEqual(result, sql)
+
+    def test_issue_233_format_union(self):
+        sql = """WITH table_test AS (\nSELECT public.categories.string_agg AS string_agg FROM public.categories\n) SELECT * FROM table_test\nUNION\nSELECT * FROM table_test"""
         result = format(parse(sql))
         self.assertEqual(result, sql)
