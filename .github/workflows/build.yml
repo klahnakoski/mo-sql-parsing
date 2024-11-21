@@ -53,7 +53,8 @@ jobs:
 
     - name: Install Test Dependencies
       run: |
-        python tests/smoke_test.py
+        python tests/smoke_test1.py
+        python tests/smoke_test1.py
         python -m pip install --upgrade pip
         pip install --no-deps -r tests/requirements.lock
         pip install .
