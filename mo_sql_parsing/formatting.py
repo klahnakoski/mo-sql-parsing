@@ -116,6 +116,7 @@ unordered_clauses = [
     "groupby",
     "having",
     "union_all",
+    "union",
 ]
 
 ordered_clauses = [
@@ -637,6 +638,10 @@ class Formatter:
     def union_all(self, json, prec):
         sql = "\nUNION ALL\n".join(self.dispatch(part) for part in listwrap(json["union_all"]))
         return f"{sql}" if prec > precedence["union_all"] else f"({sql})"
+
+    def union(self, json, prec):
+        sql = "\nUNION\n".join(self.dispatch(part) for part in listwrap(json["union"]))
+        return f"{sql}" if prec > precedence["union"] else f"({sql})"
 
     def select(self, json, prec):
         select = json["select"]
