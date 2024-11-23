@@ -12,7 +12,7 @@ import re
 
 from mo_dots import split_field
 from mo_future import first, is_text, string_types, text
-from mo_parsing import listwrap
+from mo_parsing.utils import listwrap
 
 from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence, pivot_keywords
 from mo_sql_parsing.utils import binary_ops, is_set_op

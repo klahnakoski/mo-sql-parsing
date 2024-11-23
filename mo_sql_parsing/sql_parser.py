@@ -6,7 +6,8 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import debug, Null
+from mo_dots import Null
+from mo_parsing import debug
 from mo_parsing.whitespaces import NO_WHITESPACE
 
 from mo_sql_parsing import utils
