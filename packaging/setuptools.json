@@ -11,7 +11,8 @@
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12"
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13"
     ],
     "description": "More SQL Parsing! Parse SQL into JSON parse tree",
     "extras_require": {"tests": [
@@ -21,8 +22,8 @@
     ]},
     "include_package_data": true,
     "install_requires": [
-          "mo-dots==10.647.24166",  "mo-future==7.584.24095", "mo-imports==7.584.24095",
-        "mo-parsing==8.654.24251"
+          "mo-dots==10.659.25005",  "mo-future==7.584.24095", "mo-imports==7.584.24095",
+        "mo-parsing==8.661.25011"
     ],
     "license": "MPL 2.0",
     "long_description": {
@@ -345,6 +346,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "11.658.24326",
+    "version": "11.661.25011",
     "zip_safe": true
 }
