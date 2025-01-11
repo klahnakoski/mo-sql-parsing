@@ -32,7 +32,7 @@ class Call(object):
         return f"{self.op}({self.args}, {self.kwargs})"
 
 
-IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.include
+IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
 FIRST_IDENT_CHAR = "".join(set(IDENT_CHAR) - set("0123456789"))
 SQL_NULL = Call("null", [], {})
 
