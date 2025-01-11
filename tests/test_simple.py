@@ -9,7 +9,7 @@
 
 from unittest import TestCase
 
-from mo_sql_parsing import parse, parse_mysql, format, SQL_NULL, simple_op
+from mo_sql_parsing import parse, parse_mysql, format, SQL_NULL, simple_op, normal_op
 
 try:
     from tests.util import assertRaises
@@ -1513,7 +1513,29 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue_230_is_null(self):
-        sql = 'select id from tbl where id is null'
-        result = parse(sql, fmap={"missing":"is_null", "exists":"is_not_null"})
+        sql = "select id from tbl where id is null"
+        result = parse(sql, fmap={"missing": "is_null", "exists": "is_not_null"})
         expected = {"from": "tbl", "select": {"value": "id"}, "where": {"is_null": "id"}}
         self.assertEqual(result, expected)
+
+    def test_issue_257_singleton_list(self):
+        sql = """select * from table where table.column in (1);"""
+        result = parse(sql)
+        expected = {"from": "table", "select": "*", "where": {"in": ["table.column", 1]}}
+        self.assertEqual(result, expected)
+
+        new_sql = format(result)
+        self.assertEqual(new_sql, "SELECT * FROM table WHERE table.column IN (1)")
+
+    def test_issue_256_singleton_list(self):
+        sql = """select *
+            from PROD_PIVOT_ME
+              pivot (max(event) for act_prod in ('ANY'))"""
+        result = parse(sql)
+        expected = {
+            "from": "PROD_PIVOT_ME",
+            "pivot": {"for": "act_prod", "in": {"literal": "ANY"}, "aggregate": {"max": "event"}},
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+

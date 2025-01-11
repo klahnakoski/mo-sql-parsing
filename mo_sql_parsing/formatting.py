@@ -4,17 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Author: Beto Dealmeida (beto@dealmeida.net)
+# Initial Author: Beto Dealmeida (beto@dealmeida.net)
 #
 
 
 import re
 
-from mo_dots import split_field
+from mo_dots import split_field, is_data
 from mo_future import first, is_text, string_types, text
-from mo_parsing import listwrap
+from mo_parsing.utils import listwrap
 
-from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
+from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence, pivot_keywords
 from mo_sql_parsing.utils import binary_ops, is_set_op
 
 MAX_PRECEDENCE = 100
@@ -61,24 +61,29 @@ def escape(ident, quote_char, should_quote):
     return ".".join(esc(f) for f in split_field(ident))
 
 
-def Operator(_op):
+def Operator(_op, ordered=True):
     op_prec = precedence[binary_ops[_op]]
     op = " {0} ".format(_op).replace("_", " ").upper()
 
     def func(self, json, prec):
-        acc = []
 
         if isinstance(json, dict):
             # {VARIABLE: VALUE} FORM
             k, v = first(json.items())
             json = [k, {"literal": v}]
 
-        for i, v in enumerate(listwrap(json)):
-            if i == 0:
-                acc.append(self.dispatch(v, op_prec + 0.25))
-            else:
-                acc.append(self.dispatch(v, op_prec))
-        if prec >= op_prec:
+        operands = listwrap(json)
+        if ordered and len(operands) == 2:
+            acc = [
+                self.dispatch(operands[0], op_prec + 0.5),
+                self.dispatch(operands[1], op_prec - 0.5)
+            ]
+        else:
+            acc = [self.dispatch(v, op_prec) for v in operands]
+
+        if prec > op_prec:
+            return op.join(acc)
+        elif prec == op_prec and not ordered:
             return op.join(acc)
         else:
             return f"({op.join(acc)})"
@@ -110,10 +115,13 @@ unordered_clauses = [
     "select_distinct",
     "select",
     "from",
+    "pivot",
+    "unpivot",
     "where",
     "groupby",
     "having",
     "union_all",
+    "union",
 ]
 
 ordered_clauses = [
@@ -130,10 +138,10 @@ ordered_query_kwargs = agg_kwargs | set(ordered_clauses)
 
 class Formatter:
     # infix operators
-    _mul = Operator("*")
+    _mul = Operator("*", ordered=False)
     _div = Operator("/")
     _mod = Operator("%")
-    _add = Operator("+")
+    _add = Operator("+", ordered=False)
     _sub = Operator("-")
     _neq = Operator("<>")
     _gt = Operator(">")
@@ -141,19 +149,19 @@ class Formatter:
     _gte = Operator(">=")
     _lte = Operator("<=")
     _eq = Operator("=")
-    _or = Operator("or")
-    _and = Operator("and")
-    _binary_and = Operator("&")
-    _binary_or = Operator("|")
+    _or = Operator("or", ordered=False)
+    _and = Operator("and", ordered=False)
+    _binary_and = Operator("&", ordered=False)
+    _binary_or = Operator("|", ordered=False)
     _like = Operator("like")
     _not_like = Operator("not like")
     _rlike = Operator("rlike")
     _not_rlike = Operator("not rlike")
     _ilike = Operator("ilike")
     _not_ilike = Operator("not ilike")
-    _union = Operator("union")
-    _union_all = Operator("union all")
-    _intersect = Operator("intersect")
+    _union = Operator("union", ordered=False)
+    _union_all = Operator("union all", ordered=False)
+    _intersect = Operator("intersect", ordered=False)
     _minus = Operator("minus")
     _except = Operator("except")
 
@@ -176,6 +184,8 @@ class Formatter:
                 return self._literal(json, prec)
             elif "substring" in json:
                 return self._substring(json, prec)
+            elif "generator" in json:
+                return self._generator(json, prec)
             elif "group_concat" in json:
                 return self._group_concat(json, prec)
             elif "value" in json:
@@ -309,13 +319,9 @@ class Formatter:
         # note that we disallow keys that start with `_` to avoid giving access
         # to magic methods
         attr = f"_{key}"
-        if hasattr(self, attr) and not key.startswith("_"):
-            method = getattr(self, attr)
-            op_prec = precedence.get(key, MAX_PRECEDENCE)
-            if prec >= op_prec:
-                return method(value, op_prec)
-            else:
-                return f"({method(value, op_prec)})"
+        method = getattr(self, attr, None)
+        if method and not key.startswith("_"):
+            return method(value, prec)
 
         # treat as regular function call
         if isinstance(value, dict) and len(value) == 0:
@@ -360,6 +366,11 @@ class Formatter:
             params = ", ".join(self.dispatch(p) for p in json["substring"])
             return f"SUBSTRING({params})"
 
+    def _generator(self, json, prec):
+        # TODO: replace with function-using-keywords
+        rowcount = self.dispatch(json["rowcount"])
+        return f"GENERATOR(ROWCOUNT=>{rowcount})"
+
     def _group_concat(self, json, prec):
         acc = ["group_concat(", self.dispatch(json["group_concat"]), " "]
         if "orderby" in json.keys():
@@ -371,23 +382,18 @@ class Formatter:
         return "".join(acc)
 
     def _in(self, json, prec):
-        member, set = json
-        if "literal" in set:
-            set = {"literal": listwrap(set["literal"])}
-        else:
-            set = listwrap(set)
-        sql = self.dispatch(member, precedence["in"]) + " IN " + self.dispatch(set, precedence["in"])
-        if prec < precedence["in"]:
-            sql = f"({sql})"
-        return sql
+        return self._inline_set_op("IN", json, prec)
 
     def _nin(self, json, prec):
+        return self._inline_set_op("NOT IN", json, prec)
+
+    def _inline_set_op(self, sql_op, json, prec):
         member, set = json
-        if "literal" in set:
-            set = {"literal": listwrap(set["literal"])}
+        if is_data(set) and "literal" in set:
+            set = {"literal": listwrap(set['literal'])}
         else:
             set = listwrap(set)
-        sql = self.dispatch(member, precedence["in"]) + " NOT IN " + self.dispatch(set, precedence["in"])
+        sql = self.dispatch(member, precedence["in"]) + f" {sql_op} " + self.dispatch(set, precedence["in"])
         if prec < precedence["in"]:
             sql = f"({sql})"
         return sql
@@ -521,6 +527,28 @@ class Formatter:
     def _distinct_on(self, json, prec):
         return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
+    def pivot(self, json, prec):
+        pivot = json["pivot"]
+        return self._pivot("PIVOT", pivot, self.dispatch(pivot["aggregate"]))
+
+    def unpivot(self, json, prec):
+        pivot = json["unpivot"]
+        if "nulls" in pivot:
+            nulls = " INCLUDE NULLS" if pivot["nulls"] else " EXCLUDE NULLS"
+        else:
+            nulls = ""
+        return self._pivot(f"UNPIVOT{nulls}", pivot, self.dispatch(pivot["value"]))
+
+    def _pivot(self, op, pivot, value):
+        for_ = self.dispatch(pivot["for"])
+        in_ = self.dispatch(pivot["in"])
+        sql = f"{op} ({value} FOR {for_} IN {in_})"
+        if "name" in pivot:
+            name = pivot["name"]
+            return f"{sql} AS {name}"
+        else:
+            return sql
+
     def _join_on(self, json, prec):
         detected_join = join_keywords & set(json.keys())
         if len(detected_join) == 0:
@@ -617,8 +645,26 @@ class Formatter:
         sql = "\nUNION ALL\n".join(self.dispatch(part) for part in listwrap(json["union_all"]))
         return f"{sql}" if prec > precedence["union_all"] else f"({sql})"
 
+    def union(self, json, prec):
+        sql = "\nUNION\n".join(self.dispatch(part) for part in listwrap(json["union"]))
+        return f"{sql}" if prec > precedence["union"] else f"({sql})"
+
     def select(self, json, prec):
-        param = ", ".join(self.dispatch(s, precedence["select"]) for s in listwrap(json["select"]))
+        select = json["select"]
+        acc = []
+        for s in listwrap(select):
+            if s == "*":
+                acc.append("*")
+                continue
+            if isinstance(s, str):
+                acc.append(self.dispatch(s, precedence["select"]))
+            else:
+                all_col = s.get("all_columns")
+                if all_col or isinstance(all_col, dict):
+                    acc.append(self.all_columns(s, precedence["select"]))
+                else:
+                    acc.append(self.dispatch(s, precedence["select"]))
+        param = ", ".join(acc)
         if "top" in json:
             top = self.dispatch(json["top"])
             return f"SELECT TOP ({top}) {param}"
@@ -636,7 +682,7 @@ class Formatter:
         return f"SELECT DISTINCT {param}"
 
     def from_(self, json, prec):
-        is_join = False
+        joiner = ", "
         from_ = json["from"]
         if isinstance(from_, dict) and "literal" in from_:
             content = ", ".join(self._literal(row) for row in from_["literal"])
@@ -649,11 +695,10 @@ class Formatter:
         parts = []
         for v in from_:
             if join_keywords & set(v):
-                is_join = True
+                joiner = " "
                 parts.append(self._join_on(v, precedence["from"] - 1))
             else:
                 parts.append(self.dispatch(v, precedence["from"] - 1))
-        joiner = " " if is_join else ", "
         rest = joiner.join(parts)
         return f"FROM {rest}"
 

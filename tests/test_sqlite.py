@@ -23,15 +23,13 @@ class TestSqlite(TestCase):
 
         self.assertEqual(
             result,
-            {
-                'create table': {
-                    'name': 'Products',
-                    'columns': [
-                        {'name': 'product_id', 'type': {'integer': {}}, 'primary_key': True, 'autoincrement': True},
-                        {'name': 'name', 'type': {'text': {}}, 'nullable': False},
-                        {'name': 'price', 'type': {'real': {}}, 'nullable': False},
-                        {'name': 'description', 'type': {'text': {}}}
-                    ]
-                }
-            },
+            {"create table": {
+                "name": "Products",
+                "columns": [
+                    {"name": "product_id", "type": {"integer": {}}, "primary_key": True, "autoincrement": True},
+                    {"name": "name", "type": {"text": {}}, "nullable": False},
+                    {"name": "price", "type": {"real": {}}, "nullable": False},
+                    {"name": "description", "type": {"text": {}}},
+                ],
+            }},
         )

@@ -26,19 +26,18 @@ class TestRedshift(TestCase):
         """
         result = parse(sql)
         self.assertEqual(
-            result, {
-                "create table": {
-                    "replace": False,
-                    "name": "web.customers",
-                    "columns": [
-                        {"name": "customer_number", "type": {"int": {}}, "encode": "LZO"},
-                        {"name": "metadata", "type": "SUPER", "encode": "LZO"},
-                        {"name": "email", "type": {"varchar": 255}, "encode": "LZO"},
-                        {"name": "created_at", "type": {"timestamp": {}}, "encode": "AZ64"},
-                        {"name": "last_logged_in_at", "type": {"timestamp": {}}, "encode": "AZ64"}
-                    ]
-                }
-            }
+            result,
+            {"create table": {
+                "replace": False,
+                "name": "web.customers",
+                "columns": [
+                    {"name": "customer_number", "type": {"int": {}}, "encode": "LZO"},
+                    {"name": "metadata", "type": "SUPER", "encode": "LZO"},
+                    {"name": "email", "type": {"varchar": 255}, "encode": "LZO"},
+                    {"name": "created_at", "type": {"timestamp": {}}, "encode": "AZ64"},
+                    {"name": "last_logged_in_at", "type": {"timestamp": {}}, "encode": "AZ64"},
+                ],
+            }},
         )
 
     def test_issue245b_single_sortkey(self):
@@ -55,20 +54,19 @@ class TestRedshift(TestCase):
         """
         result = parse(sql)
         self.assertEqual(
-            result, {
-                "create table": {
-                    "replace": False,
-                    "name": "web.customers",
-                    "columns": [
-                        {"name": "customer_number", "type": {"int": {}}},
-                        {"name": "metadata", "type": "SUPER"},
-                        {"name": "email", "type": {"varchar": 255}},
-                        {"name": "created_at", "type": {"timestamp": {}}},
-                        {"name": "last_logged_in_at", "type": {"timestamp": {}}}
-                    ],
-                    "sortkey": "customer_number"
-                }
-            }
+            result,
+            {"create table": {
+                "replace": False,
+                "name": "web.customers",
+                "columns": [
+                    {"name": "customer_number", "type": {"int": {}}},
+                    {"name": "metadata", "type": "SUPER"},
+                    {"name": "email", "type": {"varchar": 255}},
+                    {"name": "created_at", "type": {"timestamp": {}}},
+                    {"name": "last_logged_in_at", "type": {"timestamp": {}}},
+                ],
+                "sortkey": "customer_number",
+            }},
         )
 
     def test_issue245c_multiple_sortkeys(self):
@@ -85,22 +83,19 @@ class TestRedshift(TestCase):
         """
         result = parse(sql)
         self.assertEqual(
-            result, {
-                "create table": {
-                    "replace": False,
-                    "name": "web.customers",
-                    "columns": [
-                        {"name": "customer_number", "type": {"int": {}}},
-                        {"name": "metadata", "type": "SUPER"},
-                        {"name": "email", "type": {"varchar": 255}},
-                        {"name": "created_at", "type": {"timestamp": {}}},
-                        {"name": "last_logged_in_at", "type": {"timestamp": {}}}
-                    ],
-                    "sortkey": [
-                        "customer_number", "email"
-                    ]
-                }
-            }
+            result,
+            {"create table": {
+                "replace": False,
+                "name": "web.customers",
+                "columns": [
+                    {"name": "customer_number", "type": {"int": {}}},
+                    {"name": "metadata", "type": "SUPER"},
+                    {"name": "email", "type": {"varchar": 255}},
+                    {"name": "created_at", "type": {"timestamp": {}}},
+                    {"name": "last_logged_in_at", "type": {"timestamp": {}}},
+                ],
+                "sortkey": ["customer_number", "email"],
+            }},
         )
 
     def test_issue245d_distkey(self):
@@ -117,20 +112,19 @@ class TestRedshift(TestCase):
         """
         result = parse(sql)
         self.assertEqual(
-            result, {
-                "create table": {
-                    "replace": False,
-                    "name": "web.customers",
-                    "columns": [
-                        {"name": "customer_number", "type": {"int": {}}},
-                        {"name": "metadata", "type": "SUPER"},
-                        {"name": "email", "type": {"varchar": 255}},
-                        {"name": "created_at", "type": {"timestamp": {}}},
-                        {"name": "last_logged_in_at", "type": {"timestamp": {}}}
-                    ],
-                    "distkey": "customer_number"
-                }
-            }
+            result,
+            {"create table": {
+                "replace": False,
+                "name": "web.customers",
+                "columns": [
+                    {"name": "customer_number", "type": {"int": {}}},
+                    {"name": "metadata", "type": "SUPER"},
+                    {"name": "email", "type": {"varchar": 255}},
+                    {"name": "created_at", "type": {"timestamp": {}}},
+                    {"name": "last_logged_in_at", "type": {"timestamp": {}}},
+                ],
+                "distkey": "customer_number",
+            }},
         )
 
     def test_issue245e_combination(self):
@@ -148,21 +142,20 @@ class TestRedshift(TestCase):
         """
         result = parse(sql)
         self.assertEqual(
-            result, {
-                "create table": {
-                    "replace": False,
-                    "name": "web.customers",
-                    "columns": [
-                        {"name": "customer_number", "type": {"int": {}}, "encode": "LZO"},
-                        {"name": "metadata", "type": "SUPER", "encode": "LZO"},
-                        {"name": "email", "type": {"varchar": 255}, "encode": "LZO"},
-                        {"name": "created_at", "type": {"timestamp": {}}, "encode": "AZ64"},
-                        {"name": "last_logged_in_at", "type": {"timestamp": {}}, "encode": "AZ64"}
-                    ],
-                    "distkey": "customer_number",
-                    "sortkey": "created_at"
-                }
-            }
+            result,
+            {"create table": {
+                "replace": False,
+                "name": "web.customers",
+                "columns": [
+                    {"name": "customer_number", "type": {"int": {}}, "encode": "LZO"},
+                    {"name": "metadata", "type": "SUPER", "encode": "LZO"},
+                    {"name": "email", "type": {"varchar": 255}, "encode": "LZO"},
+                    {"name": "created_at", "type": {"timestamp": {}}, "encode": "AZ64"},
+                    {"name": "last_logged_in_at", "type": {"timestamp": {}}, "encode": "AZ64"},
+                ],
+                "distkey": "customer_number",
+                "sortkey": "created_at",
+            }},
         )
 
     def test_issue149a_casting(self):

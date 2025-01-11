@@ -13,8 +13,6 @@
 
 from unittest import skip, TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
@@ -924,8 +922,9 @@ class TestSqlGlot(TestCase):
             "where": {"eq": ["tbl_name.bar", 234]},
         }
         self.assertEqual(result, expected)
+
     def test_issue_46_sqlglot_101(self):
         sql = """DROP temporary TABLE a"""
         result = parse(sql)
-        expected = {"drop": { "temporary": True, "table": "a"}}
+        expected = {"drop": {"temporary": True, "table": "a"}}
         self.assertEqual(result, expected)

@@ -2,8 +2,7 @@
 
 [![PyPI Latest Release](https://img.shields.io/pypi/v/mo-sql-parsing.svg)](https://pypi.org/project/mo-sql-parsing/)
 [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing)
-[![Downloads](https://pepy.tech/badge/mo-sql-parsing/month)](https://pepy.tech/project/mo-sql-parsing)
-
+[![PyPI Downloads](https://static.pepy.tech/badge/mo-sql-parsing/month)](https://www.pepy.tech/projects/mo-sql-parsing)
 
 Parse SQL into JSON so we can translate it for other datastores!
 
@@ -16,7 +15,7 @@ The objective is to convert SQL queries to JSON-izable parse trees. This origina
 
 ## Project Status
 
-December 2023 -  I continue to resolve issues as they are raised. There are [over 1100 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that cover most SQL for most databases, with limited DML and UDF support, including:
+October 2024 -  I continue to resolve issues as they are raised. There are [over 1200 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that cover most SQL for most databases, with limited DML and UDF support, including:
 
   * inner queries, 
   * with clauses, 
@@ -158,6 +157,40 @@ for select in listwrap(parsed_result.get('select')):
 ```
 
 ## Version Changes, Features
+
+### Version 11
+
+*October 2024*
+
+The `PIVOT` clause has been promoted to top-level. Instead of being part of the joins found in the `FROM` clause, it is now a sibling to `SELECT`.
+
+```
+>>> from mo_sql_parsing import parse
+>>> parse("SELECT * FROM table PIVOT (SUM(x) FOR y IN (1, 2, 3))")
+```
+
+now emits
+
+```
+{
+    'select': {'all_columns': {}}, 
+    'from': 'table', 
+    'pivot': {'sum': 'x', 'for': 'y', 'in': [1, 2, 3]}
+}
+```
+
+instead of
+
+```
+{
+    'select': {'all_columns': {}}, 
+    'from': [
+        'table', 
+        'pivot': {'sum': 'x', 'for': 'y', 'in': [1, 2, 3]}
+    ]
+}
+```
+
 
 
 ### Version 10

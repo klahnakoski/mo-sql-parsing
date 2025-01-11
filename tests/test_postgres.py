@@ -9,7 +9,7 @@
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
+from mo_testing.fuzzytestcase import assertAlmostEqual
 
 from mo_sql_parsing import parse
 
@@ -540,3 +540,46 @@ class TestPostgres(TestCase):
             "select": {"value": {"json_get_text": [{"cast": ["name", {"jsonb": {}}]}, {"literal": "field_key"}]}},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_248_regex_operator1(self):
+        # https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP
+        sql = """SELECT 'abc' ~ 'abc'"""
+        result = parse(sql)
+        expected = {"select": {"value": {"regexp": [{"literal": "abc"}, {"literal": "abc"}]}}}
+
+    def test_issue_248_regex_operator2(self):
+        sql = """SELECT 'abc' ~* 'abc'"""
+        result = parse(sql)
+        expected = {"select": {"value": {"regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_248_regex_operator3(self):
+        sql = """SELECT 'abc' !~ 'abc'"""
+        result = parse(sql)
+
+        expected = {"select": {"value": {"not_regexp": [{"literal": "abc"}, {"literal": "abc"}]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_248_regex_operator4(self):
+        sql = """SELECT 'abc' !~* 'abc'"""
+        result = parse(sql)
+        expected = {"select": {"value": {"not_regexp": [{"literal": "abc"}, {"literal": "abc"}], "ignore_case": True}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_253_joins(self):
+        sql = """select t1.col1, t2.col2, t3.col3
+            from table1 t1
+            join table2 t2
+                left join table3 t3
+                on t3.id = t2.id
+            on t1.id = t2.id"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "t1", "value": "table1"},
+                {"join": {"name": "t2", "value": "table2"}, "on": {"eq": ["t1.id", "t2.id"]}},
+                {"left join": {"name": "t3", "value": "table3"}, "on": {"eq": ["t3.id", "t2.id"]}},
+            ],
+            "select": [{"value": "t1.col1"}, {"value": "t2.col2"}, {"value": "t3.col3"}],
+        }
+        assertAlmostEqual(result, expected)

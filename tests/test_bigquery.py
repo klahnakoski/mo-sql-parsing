@@ -550,15 +550,13 @@ class TestBigQuery(TestCase):
                 "name": "shift_history_pivoted",
                 "value": {
                     "select": "*",
-                    "from": [
-                        "*********************..**************..**************",
-                        {"unpivot": {
-                            "for": "time_interval",
-                            "in": ["x0h00m_0h30m", "x0h30m_1h00m"],
-                            "nulls": True,
-                            "value": "status",
-                        }},
-                    ],
+                    "from": "*********************..**************..**************",
+                    "unpivot": {
+                        "for": "time_interval",
+                        "in": ["x0h00m_0h30m", "x0h30m_1h00m"],
+                        "nulls": True,
+                        "value": "status",
+                    },
                 },
             },
         }
@@ -1423,43 +1421,41 @@ class TestBigQuery(TestCase):
         result = parse(sql)
         expected = {
             "select": "*",
-            "from": [
-                {
-                    "select": [
-                        {"value": "rt.projectId"},
-                        {"value": "rt.datasetId"},
-                        {"value": "rt.tableId"},
-                        {"name": "jobs", "value": {"count": "rt.jobId", "distinct": True}},
-                    ],
-                    "from": {"name": "rt", "value": "project..dataset..table_test"},
-                    "groupby": [{"value": 1}, {"value": 2}, {"value": 3}, {"value": 4}],
-                },
-                {"pivot": {
-                    "aggregate": {"name": "jobs", "value": {"sum": "jobs"}},
-                    "for": "statementType",
-                    "in": {"literal": [
-                        "BEGIN_TRANSACTION",
-                        "SCRIPT",
-                        "MERGE",
-                        "CREATE_TABLE_AS_SELECT",
-                        "UPDATE",
-                        "SELECT",
-                        "TRUNCATE_TABLE",
-                        "DELETE",
-                        "CREATE_VIEW",
-                        "DROP_VIEW",
-                        "DROP_TABLE",
-                        "COMMIT_TRANSACTION",
-                        "INSERT",
-                        "CREATE_TABLE_FUNCTION",
-                        "ASSERT",
-                        "CREATE_FUNCTION",
-                        "QUERY_STATEMENT_TYPE_UNSPECIFIED",
-                        "ALTER_TABLE",
-                        "CREATE_TABLE",
-                    ]},
-                }},
-            ],
+            "from": {
+                "select": [
+                    {"value": "rt.projectId"},
+                    {"value": "rt.datasetId"},
+                    {"value": "rt.tableId"},
+                    {"name": "jobs", "value": {"count": "rt.jobId", "distinct": True}},
+                ],
+                "from": {"name": "rt", "value": "project..dataset..table_test"},
+                "groupby": [{"value": 1}, {"value": 2}, {"value": 3}, {"value": 4}],
+            },
+            "pivot": {
+                "aggregate": {"name": "jobs", "value": {"sum": "jobs"}},
+                "for": "statementType",
+                "in": {"literal": [
+                    "BEGIN_TRANSACTION",
+                    "SCRIPT",
+                    "MERGE",
+                    "CREATE_TABLE_AS_SELECT",
+                    "UPDATE",
+                    "SELECT",
+                    "TRUNCATE_TABLE",
+                    "DELETE",
+                    "CREATE_VIEW",
+                    "DROP_VIEW",
+                    "DROP_TABLE",
+                    "COMMIT_TRANSACTION",
+                    "INSERT",
+                    "CREATE_TABLE_FUNCTION",
+                    "ASSERT",
+                    "CREATE_FUNCTION",
+                    "QUERY_STATEMENT_TYPE_UNSPECIFIED",
+                    "ALTER_TABLE",
+                    "CREATE_TABLE",
+                ]},
+            },
         }
 
         self.assertEqual(result, expected)
@@ -1675,17 +1671,15 @@ class TestBigQuery(TestCase):
           );"""
         result = parse(sql)
         expected = {
-            "from": [
-                "Produce",
-                {"pivot": {
-                    "aggregate": [
-                        {"value": {"max": "sales"}, "name": "max_sales"},
-                        {"value": {"min": "sales"}, "name": "min_sales"},
-                    ],
-                    "for": "quarter",
-                    "in": {"literal": ["Q1", "Q2", "Q3", "Q4"]},
-                }},
-            ],
+            "from": "Produce",
+            "pivot": {
+                "aggregate": [
+                    {"value": {"max": "sales"}, "name": "max_sales"},
+                    {"value": {"min": "sales"}, "name": "min_sales"},
+                ],
+                "for": "quarter",
+                "in": {"literal": ["Q1", "Q2", "Q3", "Q4"]},
+            },
             "select": "*",
             "with": {
                 "name": "Produce",

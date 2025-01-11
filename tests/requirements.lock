@@ -1,4 +1,4 @@
-# Tests pass with these versions 2024-04-03
+# Tests pass with python 3.8 on 2025-01-11 and with these versions
 # pip install --no-deps -r tests/requirements.lock
 hjson==3.1.0
 mo-collections==5.556.24070
@@ -14,6 +14,10 @@ mo-parsing==8.581.24094
 mo-sql-parsing==9.581.24094
 mo-streams==1.556.24070
 mo-testing==7.562.24075
-mo-threads==6.562.24075
-mo-times==5.556.24070
-zstandard==0.22.0
+mo-threads==6.570.24076
+mo-times==5.570.24076
+objgraph==3.6.2
+psutil==6.1.1
+Pympler==1.1
+pywin32==308
+zstandard==0.23.0

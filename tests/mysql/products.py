@@ -116,5 +116,5 @@ expectations = [
         ]},
         "insert": "product",
     },
-    {"commit":{}},
+    {"commit": {}},
 ]
