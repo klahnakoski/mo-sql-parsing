@@ -1,0 +1,10 @@
+Requirement already satisfied: zstandard in c:\users\kyle\appdata\local\temp\tmpn6g7bqdu\.venv\lib\site-packages (0.22.0)
+Collecting zstandard
+  Using cached zstandard-0.23.0-cp38-cp38-win_amd64.whl.metadata (3.0 kB)
+Downloading zstandard-0.23.0-cp38-cp38-win_amd64.whl (495 kB)
+Installing collected packages: zstandard
+  Attempting uninstall: zstandard
+    Found existing installation: zstandard 0.22.0
+    Uninstalling zstandard-0.22.0:
+      Successfully uninstalled zstandard-0.22.0
+Successfully installed zstandard-0.23.0

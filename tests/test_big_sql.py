@@ -11,13 +11,14 @@ import json
 from unittest import TestCase, skip
 
 from mo_json import value2json
+from mo_parsing.debug import Debugger
 from mo_times import Timer
 
 from mo_sql_parsing import parse
 
 
 class TestBigSql(TestCase):
-    @skip("too slow")
+    #@skip("too slow")
     def test_large_expression(self):
         # too slow because the faster() look-ahead can not use regexs
         # specifically, the use of a number in front of an identifier without space

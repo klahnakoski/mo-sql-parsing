@@ -824,8 +824,8 @@ def square_column(tokens):
 
 
 # NUMBERS
-real_num = Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
-real_pos = Regex(r"(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
+real_num = Regex(r"[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
+real_pos = Regex(r"(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
 
 
 def parse_int(tokens):
@@ -835,19 +835,19 @@ def parse_int(tokens):
         return int(tokens[0])
 
 
-int_num = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
-int_pos = Regex(r"\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
+int_num = Regex(r"[+-]?\d+(?:[eE]\+?\d+)?").set_parser_name("int") / parse_int
+int_pos = Regex(r"\d+(?:[eE]\+?\d+)?").set_parser_name("int") / parse_int
 hex_num = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
 
 # STRINGS
-ansi_string = Regex(r"(_utf8mb4|_utf8|_latin1|_ascii|_ucs2|_binary|n|N)?\'(\'\'|[^'])*\'") / single_literal
-regex_string = (Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")) / literal_regex
-mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
+ansi_string = Regex(r"(?:_utf8mb4|_utf8|_latin1|_ascii|_ucs2|_binary|n|N)?\'(?:\'\'|[^'])*\'") / single_literal
+regex_string = (Regex(r'r\"(?:\\\"|[^"])*\"') | Regex(r"r\'(?:\\\'|[^'])*\'")) / literal_regex
+mysql_doublequote_string = Regex(r'\"(?:\"\"|[^"])*\"') / double_literal
 
 # BASIC IDENTIFIERS
-ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / double_column
-mysql_backtick_ident = Regex(r"`(``|[^`])*`") / backtick_column
-sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / square_column
+ansi_ident = Regex(r'\"(?:\"\"|[^"])*\"') / double_column
+mysql_backtick_ident = Regex(r"`(?:``|[^`])*`") / backtick_column
+sqlserver_ident = Regex(r"\[(?:\]\]|[^\]])*\]") / square_column
 
 copy_params = (
     "ALLOW_DUPLICATE",
