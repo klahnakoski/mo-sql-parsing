@@ -1,0 +1,10 @@
+
+del .venv
+
+
+c:\Python313\python.exe -m venv .venv
+.venv\Scripts\activate
+python -m pip install --no-deps -r tests\requirements.lock
+python -m pip install --upgrade -r tests\requirements.txt
+python -m pip install --upgrade -r packaging\requirements.txt
+python -m unittest discover .

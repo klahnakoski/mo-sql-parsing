@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v3
@@ -62,7 +62,7 @@ jobs:
       env:
         CI: true
       run: |
-        python -m unittest discover tests -v
+        python -m unittest discover . -v
 
   coverage:
     if: github.ref == 'refs/heads/dev'
@@ -113,6 +113,6 @@ jobs:
         pip install --no-deps -r tests/requirements.lock
         pip install coverage coveralls
         pip install .
-        coverage run --rcfile=packaging/coverage.ini -m unittest discover tests
+        coverage run --rcfile=packaging/coverage.ini -m unittest discover .
         coverage report --rcfile=packaging/coverage.ini
         coveralls

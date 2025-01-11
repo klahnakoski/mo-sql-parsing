@@ -9,6 +9,7 @@
 
 import ast
 import sys
+from typing import List
 
 from mo_dots import is_data, is_null, literal_field, unliteral_field
 from mo_future import text, number_types, binary_type, flatten
@@ -22,7 +23,7 @@ from mo_sql_parsing import simple_op
 class Call(object):
     __slots__ = ["op", "args", "kwargs"]
 
-    def __init__(self, op, args, kwargs):
+    def __init__(self, op, args : List, kwargs: Dict):
         self.op = op
         self.args = args
         self.kwargs = kwargs
@@ -169,6 +170,10 @@ def to_json_operator(tokens):
             return Call("exists", tokens[0], {})
         else:
             return Call("missing", tokens[0], {})
+    elif op == "regexp_i":
+        return Call("regexp", [tokens[0], tokens[2]], {"ignore_case": True})
+    elif op == "not_regexp_i":
+        return Call("not_regexp", [tokens[0], tokens[2]], {"ignore_case": True})
 
     operands = [tokens[0], tokens[2]]
     binary_op = Call(op, operands, {})
@@ -264,6 +269,10 @@ binary_ops = {
     "<=>": "eq!",  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
     "!=": "neq",
     "<>": "neq",
+    "!~*": "not_regexp_i",
+    "!~": "not_regexp",
+    "~*": "regexp_i",
+    "~": "regexp",
     "not in": "nin",
     "in": "in",
     "is_not": "neq",
@@ -487,14 +496,20 @@ def to_match_expr(tokens):
 
 def to_join_call(tokens):
     op = " ".join(tokens["op"])
-    if tokens["join"]["name"]:
-        output = {op: {"name": tokens["join"]["name"], "value": tokens["join"]["value"]}}
+    join = tokens["join"]
+    if join["name"]:
+        output = {op: {"name": join["name"], "value": join["value"]}}
+    elif op:
+        output = {op: join}
     else:
-        output = {op: tokens["join"]}
+        output = tokens[0]
 
     output["on"] = tokens["on"]
     output["using"] = tokens["using"]
-    return output
+
+    if tokens["child"]:
+        return [output, *list(tokens["child"])]
+    return [output]
 
 
 def to_expression_call(tokens):
@@ -811,8 +826,8 @@ def square_column(tokens):
 
 
 # NUMBERS
-real_num = Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
-real_pos = Regex(r"(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
+real_num = Regex(r"[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
+real_pos = Regex(r"(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
 
 
 def parse_int(tokens):
@@ -822,19 +837,19 @@ def parse_int(tokens):
         return int(tokens[0])
 
 
-int_num = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
-int_pos = Regex(r"\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
+int_num = Regex(r"[+-]?\d+(?:[eE]\+?\d+)?").set_parser_name("int") / parse_int
+int_pos = Regex(r"\d+(?:[eE]\+?\d+)?").set_parser_name("int") / parse_int
 hex_num = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
 
 # STRINGS
-ansi_string = Regex(r"(_utf8mb4|_utf8|_latin1|_ascii|_ucs2|_binary|n|N)?\'(\'\'|[^'])*\'") / single_literal
-regex_string = (Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")) / literal_regex
-mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
+ansi_string = Regex(r"(?:_utf8mb4|_utf8|_latin1|_ascii|_ucs2|_binary|n|N)?\'(?:\'\'|[^'])*\'") / single_literal
+regex_string = (Regex(r'r\"(?:\\\"|[^"])*\"') | Regex(r"r\'(?:\\\'|[^'])*\'")) / literal_regex
+mysql_doublequote_string = Regex(r'\"(?:\"\"|[^"])*\"') / double_literal
 
 # BASIC IDENTIFIERS
-ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / double_column
-mysql_backtick_ident = Regex(r"`(``|[^`])*`") / backtick_column
-sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / square_column
+ansi_ident = Regex(r'\"(?:\"\"|[^"])*\"') / double_column
+mysql_backtick_ident = Regex(r"`(?:``|[^`])*`") / backtick_column
+sqlserver_ident = Regex(r"\[(?:\]\]|[^\]])*\]") / square_column
 
 copy_params = (
     "ALLOW_DUPLICATE",

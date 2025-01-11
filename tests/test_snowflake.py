@@ -10,7 +10,6 @@
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import add_error_reporting
 
 from mo_sql_parsing import parse, normal_op
@@ -297,17 +296,13 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": [
-                {"name": "monthly_sales", "value": {"select": "*", "from": "monthly_sales_table"}},
-                {
-                    "pivot": {
-                        "name": "p",
-                        "aggregate": {"sum": "amount"},
-                        "for": "month",
-                        "in": {"literal": ["JAN", "FEB", "MAR", "APR"]},
-                    },
-                },
-            ],
+            "from": {"name": "monthly_sales", "value": {"select": "*", "from": "monthly_sales_table"}},
+            "pivot": {
+                "name": "p",
+                "aggregate": {"sum": "amount"},
+                "for": "month",
+                "in": {"literal": ["JAN", "FEB", "MAR", "APR"]},
+            },
             "select": "*",
         }
 
@@ -320,10 +315,8 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": [
-                "monthly_sales",
-                {"unpivot": {"value": "sales", "for": "month", "in": ["jan", "feb", "mar", "april"]}},
-            ],
+            "from": "monthly_sales",
+            "unpivot": {"value": "sales", "for": "month", "in": ["jan", "feb", "mar", "april"]},
             "orderby": {"value": "empid"},
             "select": "*",
         }
@@ -942,8 +935,8 @@ class TestSnowflake(TestCase):
         expected = {"create table": {
             "columns": {"name": "a", "type": {"varchar": 10}},
             "name": "foo",
-            "cluster_by": "a"}
-        }
+            "cluster_by": "a",
+        }}
         self.assertEqual(result, expected)
 
     def test_issue_201_create_table_cluster_key_composite(self):
@@ -952,8 +945,8 @@ class TestSnowflake(TestCase):
         expected = {"create table": {
             "columns": [{"name": "a", "type": {"varchar": 10}}, {"name": "b", "type": {"int": {}}}],
             "name": "foo",
-            "cluster_by": ["a", "b"]}
-        }
+            "cluster_by": ["a", "b"],
+        }}
         self.assertEqual(result, expected)
 
     def test_issue_222(self):
@@ -979,5 +972,34 @@ class TestSnowflake(TestCase):
                 ]},
             },
             "window": {"name": "item_window", "value": {"partitionby": "product"}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_254(self):
+        sql = """select DATEADD(DAY, SEQ4(), DATEADD('year', -2, last_day(CURRENT_DATE(),'year'))) AS MY_DATE FROM TABLE(GENERATOR(ROWCOUNT=>(366*2)))"""
+        result = parse(sql, calls=normal_op)
+        expected = {
+            "from": {
+                "args": [{"op": "generator", "kwargs": {"rowcount": {"op": "mul", "args": [366, 2]}}}],
+                "op": "table",
+            },
+            "select": {
+                "name": "MY_DATE",
+                "value": {
+                    "op": "dateadd",
+                    "args": [
+                        "DAY",
+                        {"op": "seq4"},
+                        {
+                            "op": "dateadd",
+                            "args": [
+                                {"literal": "year"},
+                                -2,
+                                {"op": "last_day", "args": [{"op": "current_date"}, {"literal": "year"}]},
+                            ],
+                        },
+                    ],
+                },
+            },
         }
         self.assertEqual(result, expected)

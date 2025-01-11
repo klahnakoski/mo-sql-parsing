@@ -22,7 +22,6 @@ from mo_parsing import (
     LEFT_ASSOC,
     Keyword,
     Combine,
-    Empty,
 )
 
 from mo_sql_parsing.keywords import (

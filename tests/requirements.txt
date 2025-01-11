@@ -2,7 +2,7 @@ mo-testing==7.562.24075
 mo-threads==6.570.24076
 mo-files==6.570.24076
 mo-streams==1.570.24076
-zstandard>=0.22.0
-psutil
-objgraph
+zstandard>=0.23.0
+psutil>=6.1.1
+objgraph>=3.6.2
 pympler

@@ -12,8 +12,9 @@ import mo_imports
 # ensure first import is fast
 start_import = time()
 from mo_sql_parsing import format
+
 end_time = time()
-print(format({"from":"a"}))
+print(format({"from": "a"}))
 for e in mo_imports._expectations:
     print((object.__getattribute__(e, "module"), object.__getattribute__(e, "name")))
 
