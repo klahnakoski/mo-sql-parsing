@@ -1526,3 +1526,15 @@ class TestSimple(TestCase):
 
         new_sql = format(result)
         self.assertEqual(new_sql, "SELECT * FROM table WHERE table.column IN (1)")
+
+    def test_issue_256_singleton_list(self):
+        sql = """select *
+            from PROD_PIVOT_ME
+              pivot (max(event) for act_prod in ('ANY'))"""
+        result = parse(sql)
+        expected = {
+            "from": "PROD_PIVOT_ME",
+            "pivot": {"for": "act_prod", "in": {"literal": "ANY"}, "aggregate": {"max": "event"}},
+            "select": {"all_columns": {}},
+        }
+        self.assertEqual(result, expected)
