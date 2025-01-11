@@ -11,7 +11,7 @@ mo-kwargs==7.570.24076
 mo-logs==8.570.24076
 mo-math==7.570.24076
 mo-parsing==8.661.25011
-mo-sql-parsing==11.662.25011
+mo-sql-parsing==11.663.25011
 mo-streams==1.570.24076
 mo-testing==7.562.24075
 mo-threads==6.570.24076
