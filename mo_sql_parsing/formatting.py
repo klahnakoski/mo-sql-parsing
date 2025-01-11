@@ -10,7 +10,7 @@
 
 import re
 
-from mo_dots import split_field
+from mo_dots import split_field, is_data
 from mo_future import first, is_text, string_types, text
 from mo_parsing.utils import listwrap
 
@@ -381,23 +381,18 @@ class Formatter:
         return "".join(acc)
 
     def _in(self, json, prec):
-        member, set = json
-        if "literal" in set:
-            set = {"literal": listwrap(set["literal"])}
-        else:
-            set = listwrap(set)
-        sql = self.dispatch(member, precedence["in"]) + " IN " + self.dispatch(set, precedence["in"])
-        if prec < precedence["in"]:
-            sql = f"({sql})"
-        return sql
+        return self._inline_set_op("IN", json, prec)
 
     def _nin(self, json, prec):
+        return self._inline_set_op("NOT IN", json, prec)
+
+    def _inline_set_op(self, sql_op, json, prec):
         member, set = json
-        if "literal" in set:
-            set = {"literal": listwrap(set["literal"])}
+        if is_data(set) and "literal" in set:
+            set = {"literal": listwrap(set['literal'])}
         else:
             set = listwrap(set)
-        sql = self.dispatch(member, precedence["in"]) + " NOT IN " + self.dispatch(set, precedence["in"])
+        sql = self.dispatch(member, precedence["in"]) + f" {sql_op} " + self.dispatch(set, precedence["in"])
         if prec < precedence["in"]:
             sql = f"({sql})"
         return sql

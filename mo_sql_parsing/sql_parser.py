@@ -238,7 +238,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             + RB
         ) / to_json_call
 
-        single_quote_name = Regex(r"\'(\'\'|[^'])*\'") / (lambda x: single_literal(x)["literal"])
+        single_quote_name = Regex(r"\'(?:\'\'|[^'])*\'") / (lambda x: single_literal(x)["literal"])
 
         alias = Optional((
             (

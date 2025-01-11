@@ -11,14 +11,14 @@ For __Linux__:
 	pip install -r requirements.txt
 	pip install -r tests/requirements.txt
     export PYTHONPATH=.	
-	python -m unittest discover tests
+	python -m unittest discover .
 
  For __Windows__:
 
 	pip install -r requirements.txt
     pip install -r tests\requirements.txt
     set PYTHONPATH=.    
-    python.exe -m unittest discover tests
+    python.exe -m unittest discover .
 
 ### Debugging Suggestions
 

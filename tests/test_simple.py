@@ -1517,3 +1517,12 @@ class TestSimple(TestCase):
         result = parse(sql, fmap={"missing": "is_null", "exists": "is_not_null"})
         expected = {"from": "tbl", "select": {"value": "id"}, "where": {"is_null": "id"}}
         self.assertEqual(result, expected)
+
+    def test_issue_257_singleton_list(self):
+        sql = """select * from table where table.column in (1);"""
+        result = parse(sql)
+        expected = {"from": "table", "select": {"all_columns": {}}, "where": {"in": ["table.column", 1]}}
+        self.assertEqual(result, expected)
+
+        new_sql = format(result)
+        self.assertEqual(new_sql, "SELECT * FROM table WHERE table.column IN (1)")
