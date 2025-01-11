@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     author='Kyle Lahnakoski',
     author_email='kyle@lahnakoski.com',
-    classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: SQL","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","Programming Language :: Python :: 3.10","Programming Language :: Python :: 3.11","Programming Language :: Python :: 3.12","Programming Language :: Python :: 3.13"],
+    classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: SQL","Programming Language :: Python :: 3.13"],
     description='More SQL Parsing! Parse SQL into JSON parse tree',
     extras_require={"tests":["mo-testing==7.562.24075","mo-threads==6.570.24076","mo-files==6.570.24076","mo-streams==1.570.24076","zstandard>=0.22.0","psutil","objgraph","pympler"]},
     include_package_data=True,
