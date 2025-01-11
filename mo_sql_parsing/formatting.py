@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Author: Beto Dealmeida (beto@dealmeida.net)
+# Initial Author: Beto Dealmeida (beto@dealmeida.net)
 #
 
 
@@ -61,24 +61,29 @@ def escape(ident, quote_char, should_quote):
     return ".".join(esc(f) for f in split_field(ident))
 
 
-def Operator(_op):
+def Operator(_op, ordered=True):
     op_prec = precedence[binary_ops[_op]]
     op = " {0} ".format(_op).replace("_", " ").upper()
 
     def func(self, json, prec):
-        acc = []
 
         if isinstance(json, dict):
             # {VARIABLE: VALUE} FORM
             k, v = first(json.items())
             json = [k, {"literal": v}]
 
-        for i, v in enumerate(listwrap(json)):
-            if i == 0:
-                acc.append(self.dispatch(v, op_prec + 0.25))
-            else:
-                acc.append(self.dispatch(v, op_prec))
-        if prec >= op_prec:
+        operands = listwrap(json)
+        if ordered and len(operands) == 2:
+            acc = [
+                self.dispatch(operands[0], op_prec + 0.5),
+                self.dispatch(operands[1], op_prec - 0.5)
+            ]
+        else:
+            acc = [self.dispatch(v, op_prec) for v in operands]
+
+        if prec > op_prec:
+            return op.join(acc)
+        elif prec == op_prec and not ordered:
             return op.join(acc)
         else:
             return f"({op.join(acc)})"
@@ -133,10 +138,10 @@ ordered_query_kwargs = agg_kwargs | set(ordered_clauses)
 
 class Formatter:
     # infix operators
-    _mul = Operator("*")
+    _mul = Operator("*", ordered=False)
     _div = Operator("/")
     _mod = Operator("%")
-    _add = Operator("+")
+    _add = Operator("+", ordered=False)
     _sub = Operator("-")
     _neq = Operator("<>")
     _gt = Operator(">")
@@ -144,19 +149,19 @@ class Formatter:
     _gte = Operator(">=")
     _lte = Operator("<=")
     _eq = Operator("=")
-    _or = Operator("or")
-    _and = Operator("and")
-    _binary_and = Operator("&")
-    _binary_or = Operator("|")
+    _or = Operator("or", ordered=False)
+    _and = Operator("and", ordered=False)
+    _binary_and = Operator("&", ordered=False)
+    _binary_or = Operator("|", ordered=False)
     _like = Operator("like")
     _not_like = Operator("not like")
     _rlike = Operator("rlike")
     _not_rlike = Operator("not rlike")
     _ilike = Operator("ilike")
     _not_ilike = Operator("not ilike")
-    _union = Operator("union")
-    _union_all = Operator("union all")
-    _intersect = Operator("intersect")
+    _union = Operator("union", ordered=False)
+    _union_all = Operator("union all", ordered=False)
+    _intersect = Operator("intersect", ordered=False)
     _minus = Operator("minus")
     _except = Operator("except")
 
@@ -314,13 +319,9 @@ class Formatter:
         # note that we disallow keys that start with `_` to avoid giving access
         # to magic methods
         attr = f"_{key}"
-        if hasattr(self, attr) and not key.startswith("_"):
-            method = getattr(self, attr)
-            op_prec = precedence.get(key, MAX_PRECEDENCE)
-            if prec >= op_prec:
-                return method(value, op_prec)
-            else:
-                return f"({method(value, op_prec)})"
+        method = getattr(self, attr, None)
+        if method and not key.startswith("_"):
+            return method(value, prec)
 
         # treat as regular function call
         if isinstance(value, dict) and len(value) == 0:

@@ -1538,3 +1538,4 @@ class TestSimple(TestCase):
             "select": {"all_columns": {}},
         }
         self.assertEqual(result, expected)
+

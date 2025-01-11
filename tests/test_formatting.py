@@ -6,8 +6,7 @@
 #
 # Author: Beto Dealmeida (beto@dealmeida.net)
 #
-
-
+import re
 from unittest import TestCase
 
 from mo_sql_parsing import format, parse, parse_sqlserver
@@ -842,3 +841,73 @@ class TestSimple(TestCase):
         sql = """WITH table_test AS (\nSELECT public.categories.string_agg AS string_agg FROM public.categories\n) SELECT * FROM table_test\nUNION\nSELECT * FROM table_test"""
         result = format(parse(sql))
         self.assertEqual(result, sql)
+
+    def test_issue_258_lost_brackets_mini1(self):
+        sql = """SELECT a - b - (c - d)"""
+        result = format(parse(sql))
+        self.assertEqual(result, sql)
+
+    def test_issue_258_lost_brackets_mini2(self):
+        sql = "SELECT a - (b + c)"
+        result = format(parse(sql))
+        self.assertEqual(result, sql)
+
+    def test_issue_258_lost_brackets_mini3(self):
+        sql = "SELECT a + b - c"
+        result = format(parse(sql))
+        self.assertEqual(result, sql)
+
+    def test_issue_258_lost_brackets(self):
+        sql = """
+        SELECT ROUND(COALESCE(
+             (
+                 (COUNT(CASE
+                        WHEN
+                            "public"."polls"."F1" >=
+                            9 THEN 1 END) * 100.0 /
+                  NULLIF(COUNT("public"."polls"."id"), 0)) -
+                 (COUNT(CASE
+                            WHEN
+                                "public"."polls"."F1" <=
+                                6 THEN 1 END) * 100.0 /
+                  NULLIF(COUNT("public"."polls"."id"), 0))
+            ) -
+            (
+                 (COUNT(CASE
+                            WHEN
+                                "public"."polls2"."F1" >=
+                                9 THEN 1 END) * 100.0 /
+                  NULLIF(COUNT("public"."polls2"."id"), 0)) -
+                  (COUNT(CASE
+                            WHEN
+                                "public"."polls2"."F1" <=
+                                6 THEN 1 END) * 100.0 /
+                   NULLIF(COUNT("public"."polls2"."id"), 0)
+                  )
+            ), 0), 2) AS "vcol"
+        FROM "public"."polls2"
+                 LEFT JOIN "public"."polls" ON "public"."polls2"."id" = "public"."polls"."id"
+        WHERE "public"."polls2"."F1" IS NOT NULL
+          AND "public"."polls"."F1" IS NOT NULL;"""
+        result = format(parse(sql))
+
+        expected = """
+            SELECT 
+                ROUND(COALESCE(
+                    COUNT(CASE WHEN public.polls.F1 >= 9 THEN 1 END) * 100.0 / NULLIF(COUNT(public.polls.id), 0)
+                    - COUNT(CASE WHEN public.polls.F1 <= 6 THEN 1 END) * 100.0 / NULLIF(COUNT(public.polls.id), 0)
+                    - (
+                        COUNT(CASE WHEN public.polls2.F1 >= 9 THEN 1 END) * 100.0 / NULLIF(COUNT(public.polls2.id), 0) 
+                        - COUNT(CASE WHEN public.polls2.F1 <= 6 THEN 1 END) * 100.0 / NULLIF(COUNT(public.polls2.id), 0)
+                      ), 
+                    0
+                ), 2) AS vcol 
+            FROM 
+                public.polls2 
+            LEFT JOIN public.polls ON public.polls2.id = public.polls.id 
+            WHERE 
+                public.polls2.F1 IS NOT NULL AND 
+                public.polls.F1 IS NOT NULL
+        """
+        expected = re.sub(r"\s+", " ",  expected).replace("( ", "(").replace(" )", ")").strip()
+        self.assertEqual(result, expected)
