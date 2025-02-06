@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at http://mozilla.org/MPL/2.0/.
+# You can obtain one at https://www.mozilla.org/en-US/MPL/2.0/.
 #
 # Author: Beto Dealmeida (beto@dealmeida.net)
 #
@@ -402,9 +402,7 @@ class TestSimple(TestCase):
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
-        query = (
-            """SELECT first_name FROM Professionals\nUNION\nSELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
-        )
+        query = """SELECT first_name FROM Professionals\nUNION\nSELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -909,5 +907,5 @@ class TestSimple(TestCase):
                 public.polls2.F1 IS NOT NULL AND 
                 public.polls.F1 IS NOT NULL
         """
-        expected = re.sub(r"\s+", " ",  expected).replace("( ", "(").replace(" )", ")").strip()
+        expected = re.sub(r"\s+", " ", expected).replace("( ", "(").replace(" )", ")").strip()
         self.assertEqual(result, expected)

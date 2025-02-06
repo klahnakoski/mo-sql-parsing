@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at http://mozilla.org/MPL/2.0/.
+# You can obtain one at https://www.mozilla.org/en-US/MPL/2.0/.
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
@@ -306,7 +306,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
         one_param = (
             # KEYWORD PARAMETERS?
             # https://docs.snowflake.com/en/sql-reference/functions/generator.html
-            Group(ident/ (lambda t: t[0].lower()) + Literal("=>").suppress() + Group(expression))("kwargs")
+            Group(ident / (lambda t: t[0].lower()) + Literal("=>").suppress() + Group(expression))("kwargs")
             / to_kwarg
         ) | Group(expression)("params")
 

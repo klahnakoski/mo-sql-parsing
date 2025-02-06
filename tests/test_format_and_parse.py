@@ -2,7 +2,7 @@
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at http://mozilla.org/MPL/2.0/.
+# You can obtain one at https://www.mozilla.org/en-US/MPL/2.0/.
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
@@ -1830,12 +1830,7 @@ order by number_sites desc"""
         json = {
             "select": [{"value": "col_a"}, {"value": "col_b"}],
             "from": "tab",
-            "unpivot": {
-                "value": "col_a",
-                "for": "col_b",
-                "in": ["col_1", "col_2"],
-                "name": "u",
-            },
+            "unpivot": {"value": "col_a", "for": "col_b", "in": ["col_1", "col_2"], "name": "u",},
         }
         self.verify_formatting(sql, json)
 
@@ -1844,13 +1839,7 @@ order by number_sites desc"""
         json = {
             "select": [{"value": "col_a"}, {"value": "col_b"}],
             "from": "tab",
-            "unpivot": {
-                "nulls": False,
-                "value": "col_a",
-                "for": "col_b",
-                "in": ["col_1", "col_2"],
-                "name": "u",
-            },
+            "unpivot": {"nulls": False, "value": "col_a", "for": "col_b", "in": ["col_1", "col_2"], "name": "u",},
         }
         self.verify_formatting(sql, json)
 
@@ -1858,15 +1847,18 @@ order by number_sites desc"""
         sql = """select DATEADD(DAY, SEQ4(), DATEADD('year', -2, last_day(CURRENT_DATE(),'year'))) AS MY_DATE FROM TABLE(GENERATOR(ROWCOUNT=>(366*2)))"""
         json = {
             "select": {
-                "value": {
-                    "dateadd": [
-                        "DAY",
-                        {"seq4": {}},
-                        {"dateadd": ["year", -2, {"last_day": [{"current_date": {}}, "year"]}]}
-                    ]
-                },
-                "name": "MY_DATE"
+                "value": {"dateadd": [
+                    "DAY",
+                    {"seq4": {}},
+                    {"dateadd": ["year", -2, {"last_day": [{"current_date": {}}, "year"]}]},
+                ]},
+                "name": "MY_DATE",
             },
-            "from": {"table": {"generator": {}, "rowcount": {'mul':[366, 2]}}}
+            "from": {"table": {"generator": {}, "rowcount": {"mul": [366, 2]}}},
         }
+        self.verify_formatting(sql, json)
+
+    def test_issue_259_insert(self):
+        sql = """INSERT INTO t1 (f1, f2) SELECT t2.f1, t2.f2 FROM t2"""
+        json = {"columns": ["f1", "f2"], "query": {"select": [{"value": "t2.f1"}, {"value": "t2.f2"}]}, "insert": "t1"}
         self.verify_formatting(sql, json)

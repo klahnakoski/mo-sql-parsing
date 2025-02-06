@@ -1,7 +1,7 @@
 # encoding: utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at http://mozilla.org/MPL/2.0/.
+# You can obtain one at https://www.mozilla.org/en-US/MPL/2.0/.
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
@@ -18,7 +18,7 @@ from mo_sql_parsing import parse
 
 
 class TestBigSql(TestCase):
-    #@skip("too slow")
+    # @skip("too slow")
     def test_large_expression(self):
         # too slow because the faster() look-ahead can not use regexs
         # specifically, the use of a number in front of an identifier without space
