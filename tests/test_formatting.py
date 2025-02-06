@@ -402,9 +402,7 @@ class TestSimple(TestCase):
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
-        query = (
-            """SELECT first_name FROM Professionals\nUNION\nSELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
-        )
+        query = """SELECT first_name FROM Professionals\nUNION\nSELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -909,5 +907,5 @@ class TestSimple(TestCase):
                 public.polls2.F1 IS NOT NULL AND 
                 public.polls.F1 IS NOT NULL
         """
-        expected = re.sub(r"\s+", " ",  expected).replace("( ", "(").replace(" )", ")").strip()
+        expected = re.sub(r"\s+", " ", expected).replace("( ", "(").replace(" )", ")").strip()
         self.assertEqual(result, expected)

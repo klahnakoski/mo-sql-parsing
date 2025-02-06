@@ -8,7 +8,7 @@
 #
 
 
-import os
+import re
 from unittest import TestCase, skip
 
 from mo_files import File
@@ -18,9 +18,6 @@ from mo_math import randoms
 from mo_times import Timer
 
 from mo_sql_parsing import parse, format
-
-IS_TRAVIS = bool(os.environ.get("TRAVIS"))
-table = "".maketrans("", "", strings.delchars)
 
 
 class TestSoQueries(TestCase):
@@ -59,9 +56,12 @@ class TestSoQueries(TestCase):
             )
 
 
+JUNK = re.compile(r"[^a-zA-Z0-9_]")
+
+
 def scrub(sql):
     comment = strings.between(sql, "--", "\n")
     while comment:
         sql = sql.replace("--" + comment, "")
         comment = strings.between(sql, "--", "\n")
-    return sql.translate(table).lower()
+    return JUNK.sub(sql, "").lower()

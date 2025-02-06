@@ -74,10 +74,7 @@ def Operator(_op, ordered=True):
 
         operands = listwrap(json)
         if ordered and len(operands) == 2:
-            acc = [
-                self.dispatch(operands[0], op_prec + 0.5),
-                self.dispatch(operands[1], op_prec - 0.5)
-            ]
+            acc = [self.dispatch(operands[0], op_prec + 0.5), self.dispatch(operands[1], op_prec - 0.5)]
         else:
             acc = [self.dispatch(v, op_prec) for v in operands]
 
@@ -390,7 +387,7 @@ class Formatter:
     def _inline_set_op(self, sql_op, json, prec):
         member, set = json
         if is_data(set) and "literal" in set:
-            set = {"literal": listwrap(set['literal'])}
+            set = {"literal": listwrap(set["literal"])}
         else:
             set = listwrap(set)
         sql = self.dispatch(member, precedence["in"]) + f" {sql_op} " + self.dispatch(set, precedence["in"])
@@ -757,7 +754,7 @@ class Formatter:
         acc.append(json["insert"])
 
         if "columns" in json:
-            acc.append(self.sql_list(json))
+            acc.append(self.sql_list(json["columns"]))
         if "values" in json:
             values = json["values"]
             if all(isinstance(row, dict) for row in values):
@@ -775,7 +772,7 @@ class Formatter:
                     acc.append("(" + ", ".join(self._literal(row)) + ")")
 
         else:
-            if json["if exists"]:
+            if json.get("if exists"):
                 acc.append("IF EXISTS")
             acc.append(self.dispatch(json["query"]))
         return " ".join(acc)

@@ -23,7 +23,7 @@ from mo_sql_parsing import simple_op
 class Call(object):
     __slots__ = ["op", "args", "kwargs"]
 
-    def __init__(self, op, args : List, kwargs: Dict):
+    def __init__(self, op, args: List, kwargs: Dict):
         self.op = op
         self.args = args
         self.kwargs = kwargs
@@ -924,7 +924,9 @@ def no_dashes(tokens, start, string):
 digit = Char("0123456789")
 with whitespaces.NO_WHITESPACE:
     # repack the expression into a regex for faster parsing ident_w_dash
-    ident_w_dash = Regex((Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]).__regex__()[1])
+    ident_w_dash = Regex(
+        (Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]).__regex__()[1]
+    )
     ident_w_dash_warning = ident_w_dash.set_parser_name("identifier_with_dashes") / no_dashes
 
 simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")

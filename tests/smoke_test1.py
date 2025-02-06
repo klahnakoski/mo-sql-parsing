@@ -11,6 +11,7 @@ from time import time
 # ensure first import is fast
 start_import = time()
 from mo_sql_parsing import parse, normal_op
+
 end_time = time()
 import_time = end_time - start_import
 if import_time > 0.2:
