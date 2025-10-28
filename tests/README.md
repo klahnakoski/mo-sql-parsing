@@ -27,6 +27,13 @@ For __Linux__:
 ### Debugging Suggestions
 
 Once you have written a failing test, you can use `with Debugger():` in your test to print out a trace of matching attempts. 
- 
+
+### Upgrade dependencies
+
+To upgrade the test dependencies, run:
+
+    .venv\Scripts\activate
+    python -m pip install --upgrade pip-tools
+    pip-compile tests/requirements.txt -o tests/requirements.lock
 
 

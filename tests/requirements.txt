@@ -1,7 +1,7 @@
-mo-testing==7.562.24075
-mo-threads==6.570.24076
-mo-files==6.570.24076
-mo-streams==1.570.24076
+mo-testing==8.674.25037
+mo-threads==6.672.25036
+mo-files===6.672.25036
+mo-streams==1.673.25037
 zstandard>=0.23.0
 psutil>=7.1.2
 objgraph>=3.6.2
