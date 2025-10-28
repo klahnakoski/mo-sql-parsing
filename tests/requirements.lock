@@ -19,5 +19,4 @@ mo-times==5.570.24076
 objgraph==3.6.2
 psutil==7.1.2
 Pympler==1.1
-pywin32==311
 zstandard==0.23.0
