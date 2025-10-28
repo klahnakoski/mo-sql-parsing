@@ -4,9 +4,9 @@ from setuptools import setup
 setup(
     author='Kyle Lahnakoski',
     author_email='kyle@lahnakoski.com',
-    classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: SQL","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","Programming Language :: Python :: 3.10","Programming Language :: Python :: 3.11","Programming Language :: Python :: 3.12","Programming Language :: Python :: 3.13"],
+    classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: SQL","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","Programming Language :: Python :: 3.10","Programming Language :: Python :: 3.11","Programming Language :: Python :: 3.12","Programming Language :: Python :: 3.13","Programming Language :: Python :: 3.14","Programming Language :: Python :: 3.15"],
     description='More SQL Parsing! Parse SQL into JSON parse tree',
-    extras_require={"tests":["mo-testing==8.674.25037","mo-threads==6.672.25036","mo-files","mo-streams==1.673.25037","zstandard>=0.23.0","psutil>=7.1.2","objgraph>=3.6.2","pympler"]},
+    extras_require={"tests":["mo-testing==8.674.25037","mo-threads==6.672.25036","mo-files>=6.672.25036","mo-streams==1.673.25037","zstandard>=0.23.0","psutil>=7.1.2","objgraph>=3.6.2","pympler"]},
     include_package_data=True,
     install_requires=["mo-dots==10.685.25166","mo-future==7.685.25166","mo-imports==7.685.25166","mo-parsing==8.694.25301"],
     license='MPL 2.0',
@@ -15,6 +15,6 @@ setup(
     name='mo-sql-parsing',
     packages=["mo_sql_parsing"],
     url='https://github.com/klahnakoski/mo-sql-parsing',
-    version='11.695.25301',
+    version='11.696.25301',
     zip_safe=True
 )
