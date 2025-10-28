@@ -16,8 +16,8 @@
     ],
     "description": "More SQL Parsing! Parse SQL into JSON parse tree",
     "extras_require": {"tests": [
-        "mo-testing==7.562.24075", "mo-threads==6.570.24076",   "mo-files==6.570.24076",
-        "mo-streams==1.570.24076",       "zstandard>=0.23.0",           "psutil>=6.1.1",
+        "mo-testing==8.674.25037", "mo-threads==6.672.25036",                "mo-files",
+        "mo-streams==1.673.25037",       "zstandard>=0.23.0",           "psutil>=7.1.2",
                 "objgraph>=3.6.2",                 "pympler"
     ]},
     "include_package_data": true,
@@ -346,6 +346,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "11.694.25301",
+    "version": "11.695.25301",
     "zip_safe": true
 }

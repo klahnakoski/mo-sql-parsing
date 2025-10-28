@@ -1,6 +1,6 @@
 mo-testing==8.674.25037
 mo-threads==6.672.25036
-mo-files===6.672.25036
+mo-files>=6.672.25036
 mo-streams==1.673.25037
 zstandard>=0.23.0
 psutil>=7.1.2
