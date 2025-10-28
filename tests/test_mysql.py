@@ -1177,3 +1177,50 @@ class TestMySql(FuzzyTestCase):
             },
         }}
         self.assertEqual(result, expected)
+
+    def test_call_0(self):
+        sql = """
+        CREATE PROCEDURE demo()
+        BEGIN
+            CALL my_procedure();
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {"name": "demo", "body": {"block": {"op": "my_procedure"}}}}
+        self.assertEqual(result, expected)
+
+    def test_call_0b(self):
+        sql = """
+        CREATE PROCEDURE demo()
+        BEGIN
+            CALL my_procedure;
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {"name": "demo", "body": {"block": {"op": "my_procedure"}}}}
+        self.assertEqual(result, expected)
+
+    def test_call_1(self):
+        sql = """
+        CREATE PROCEDURE demo()
+        BEGIN
+            CALL my_procedure(1);
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {"name": "demo", "body": {"block": {"op": "my_procedure", "args": 1}}}}
+        self.assertEqual(result, expected)
+
+    def test_call_3(self):
+        sql = """
+        CREATE PROCEDURE demo()
+        BEGIN
+            CALL my_procedure(1, 'test', @output_param);
+        END;
+        """
+        result = parse(sql)
+        expected = {"create_procedure": {
+            "name": "demo",
+            "body": {"block": {"op": "my_procedure", "args": [1, {"literal": "test"}, "@output_param"]}},
+        }}
+        self.assertEqual(result, expected)
