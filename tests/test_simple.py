@@ -1538,3 +1538,42 @@ class TestSimple(TestCase):
             "select": {"all_columns": {}},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_262_parse_primary(self):
+        sql = """
+            WITH primary AS (
+                SELECT id, name FROM users WHERE active = 1
+            ),
+            secondary AS (
+                SELECT id, name FROM users WHERE active = 0
+            )
+            SELECT * FROM primary
+            UNION ALL
+            SELECT * FROM secondary;
+            """
+        result = parse(sql)
+        expected = {
+            "with": [
+                {
+                    "name": "primary",
+                    "value": {
+                        "from": "users",
+                        "select": [{"value": "id"}, {"value": "name"}],
+                        "where": {"eq": ["active", 1]},
+                    },
+                },
+                {
+                    "name": "secondary",
+                    "value": {
+                        "from": "users",
+                        "select": [{"value": "id"}, {"value": "name"}],
+                        "where": {"eq": ["active", 0]},
+                    },
+                },
+            ],
+            "union_all": [
+                {"from": "primary", "select": {"all_columns": {}}},
+                {"from": "secondary", "select": {"all_columns": {}}},
+            ],
+        }
+        self.assertEqual(result, expected)

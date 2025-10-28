@@ -230,7 +230,6 @@ RESERVED = MatchFirst([
     OUTER,
     OVER,
     PARTITION,
-    PRIMARY,
     PIVOT,
     QUALIFY,
     REFERENCES,
