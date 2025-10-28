@@ -1138,6 +1138,10 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             keyword("declare").suppress() + identifier("name") + keyword("cursor for").suppress() + query("query")
         )("declare_cursor")
 
+        call_sql_function = Group(
+            keyword("call") + identifier("op") + Optional(LB + Optional(delimited_list(expression)("args")) + RB)
+        )
+
         transact = (
             Group(keyword("start transaction")("op")) / to_json_call
             | Group(keyword("commit")("op")) / to_json_call
@@ -1163,6 +1167,7 @@ def parser(literal_string, simple_ident, all_columns=None, sqlserver=False):
             | (create_table | create_view | create_cache | create_index | create_schema)
             | drops
             | (copy | alter)
+            | call_sql_function
             | create_trigger
             | create_procedure
             | create_function
