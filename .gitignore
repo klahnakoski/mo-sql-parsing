@@ -15,6 +15,7 @@ vendor/
 .eggs
 /tests/test_working.py
 /setup.py
+.venv
 
 
 /MANIFEST.in
