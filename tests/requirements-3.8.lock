@@ -1,5 +1,5 @@
 # Tests pass with python 3.8 on 2026-08-22 and with these versions
-# pip install --no-deps -r tests/requirements.lock
+# pip install --no-deps -r tests/requirements-3.8.lock
 hjson==3.1.0
 mo-dots==10.686.26234
 mo-files==6.672.25036
