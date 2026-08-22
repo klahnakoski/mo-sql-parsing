@@ -1,5 +1,5 @@
-# Tests pass with python 3.8 on 2026-08-22 and with these versions
-# pip install --no-deps -r tests/requirements-3.8.lock
+# Tests pass with python 3.10 on 2026-08-22 and with these versions
+# pip install --no-deps -r tests/requirements-3.10.lock
 hjson==3.1.0
 mo-dots==10.687.26234
 mo-files==6.672.25036
@@ -19,4 +19,4 @@ objgraph==3.6.2
 psutil==7.2.2
 Pympler==1.1
 pytz==2026.3.post1
-zstandard==0.23.0
+zstandard==0.25.0
