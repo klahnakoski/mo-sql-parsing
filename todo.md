@@ -39,6 +39,20 @@ unskipping means deciding the parse tree shape as well as writing the grammar.
   `emit_warning_for_double_quotes`, `# NOT SURE IF True IS A GOOD DEFAULT`. Currently off for MySQL,
   on elsewhere. Either commit to a default or make it a `parse()` argument.
 
+## Lazy-import fallout
+
+- **`from mo_sql_parsing import sql_parser` returns `None` until a parse has happened.**
+  `__init__.py` sets `sql_parser = _utils = ansi_string = scrub = None` at module scope, which shadows
+  the real submodules; `_get_or_create_parser` rebinds them on first `parse()`. `tests/test_meta.py`
+  relies on this (`_ensure_imported = sql_parser`) and so its import guard is silently dead. Either
+  give the placeholders private names or drop the guard.
+
+- **First parse costs ~470ms** — ~210ms importing submodules, ~260ms building the grammar — and each
+  flavour (`common`/`mysql`/`sqlserver`/`bigquery`) pays the build again, since `lookup_parsers` keys on
+  flavour. Roughly 130ms of the import half is `mo_dots`/`mo_future` pulled in by `mo_parsing` itself,
+  so it is not ours to fix. The grammar build is the only real target left; caching a finalized parser
+  or sharing flavour-invariant subgrammars are the two options, both non-trivial.
+
 ## Build and packaging
 
 - **`tests/requirements-3.8.lock` and `-3.9.lock` are unused.** `.github/workflows/build.yml` installs
