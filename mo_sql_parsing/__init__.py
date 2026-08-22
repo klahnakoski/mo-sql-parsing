@@ -6,11 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-import re
 from threading import Lock
-from typing import Mapping
-
-from mo_dots import listwrap, Data, from_data
 
 parse_locker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 
@@ -23,7 +19,7 @@ lookup_parsers = {
     "bigquery_parser": {"*": None, None: None},
 }
 
-SQL_NULL: Mapping[str, Mapping] = {"null": {}}
+SQL_NULL = {"null": {}}
 
 
 def parse(sql, null=SQL_NULL, calls=None, all_columns=None, fmap=None):
@@ -145,6 +141,8 @@ def simple_op(op, args, kwargs):
 
 
 def normal_op(op, args, kwargs):
+    from mo_dots import listwrap, Data, from_data
+
     output = Data(op=op)
     args = listwrap(args)
     if args and (not isinstance(args[0], dict) or args[0]):
@@ -154,10 +152,10 @@ def normal_op(op, args, kwargs):
     return from_data(output)
 
 
-delimiter_pattern = re.compile(r"^\s*delimiter\s+([^\n]+)$", re.IGNORECASE | re.MULTILINE)
-
-
 def parse_delimiters(sql, ignore=";"):
+    import re
+
+    delimiter_pattern = re.compile(r"^\s*delimiter\s+([^\n]+)$", re.IGNORECASE | re.MULTILINE)
     delimiter = ";"
     ender = r"\s*(\n|$)"
     splitter = re.compile(re.escape(delimiter) + ender)
