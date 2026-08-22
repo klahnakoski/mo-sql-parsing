@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## todo.md
+
+`todo.md` is the running work list for this repo. Keep it current:
+
+- Before starting, read it — the task may already be described there, with the failing test named.
+- When you finish something, delete the item. Do not leave it with a "done" note.
+- When you notice work you are not going to do now — a skipped test you understand, a wrong error
+  message, a decision someone has to make — add it before the session ends, so it is not lost.
+- Every item names the test, file, or line that proves it. An item with nothing to point at is a
+  guess; find the evidence or leave it out.
+
 ## Commands
 
 The virtualenv is `.venv` (Windows: `.venv\Scripts\activate`, Linux: `source .venv/bin/activate`).
