@@ -24,8 +24,8 @@
     ]},
     "include_package_data": true,
     "install_requires": [
-          "mo-dots==10.687.26234",  "mo-future==7.686.26234", "mo-imports==7.686.26234",
-          "mo-parsing==9.2.26234"
+          "mo-dots==10.688.26234",  "mo-future==7.687.26234", "mo-imports==7.687.26234",
+          "mo-parsing==9.3.26234"
     ],
     "license": "MPL 2.0",
     "long_description": {
@@ -348,6 +348,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "11.698.26234",
+    "version": "11.699.26234",
     "zip_safe": true
 }
