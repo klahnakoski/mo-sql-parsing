@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## todo.md
+## TODO.md
 
-`todo.md` is the running work list for this repo. Keep it current:
+`TODO.md` is the running work list for this repo. Keep it current:
 
 - Before starting, read it — the task may already be described there, with the failing test named.
 - When you finish something, delete the item. Do not leave it with a "done" note.

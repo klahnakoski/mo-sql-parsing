@@ -47,11 +47,20 @@ unskipping means deciding the parse tree shape as well as writing the grammar.
   relies on this (`_ensure_imported = sql_parser`) and so its import guard is silently dead. Either
   give the placeholders private names or drop the guard.
 
-- **First parse costs ~470ms** — ~210ms importing submodules, ~260ms building the grammar — and each
-  flavour (`common`/`mysql`/`sqlserver`/`bigquery`) pays the build again, since `lookup_parsers` keys on
-  flavour. Roughly 130ms of the import half is `mo_dots`/`mo_future` pulled in by `mo_parsing` itself,
-  so it is not ours to fix. The grammar build is the only real target left; caching a finalized parser
-  or sharing flavour-invariant subgrammars are the two options, both non-trivial.
+- **First parse costs ~470ms** — ~210ms importing submodules, ~260ms building the grammar — against
+  ~1.5ms to then parse a statement. Each flavour (`common`/`mysql`/`sqlserver`/`bigquery`) pays the
+  build again, since `lookup_parsers` keys on flavour.
+
+  Nothing here is reducible from this repo, and the obvious ideas were measured and rejected — do not
+  re-derive them:
+  - ~130ms of the import half is `mo_dots`/`mo_future`, which `mo_parsing` pulls in itself.
+  - The 260ms build has no hotspot in our code; it is `mo_parsing` constructing elements. Two
+    candidate fixes there together moved 251ms to 246ms. Logged in `~/code/mo-parsing/TODO.md`.
+  - A finalized parser cannot be pickled (`wrap_parse_action.<locals>.wrapper` is a local closure),
+    so it cannot be cached to disk.
+  - Sharing flavour-invariant subgrammars would need `literal_string`/`simple_ident` as `Forward`s
+    rebound per parse. `finalize()` bakes first-character lookup tables that differ per flavour
+    exactly there, so rebinding would mis-parse rather than fail. Not worth the risk.
 
 ## Build and packaging
 

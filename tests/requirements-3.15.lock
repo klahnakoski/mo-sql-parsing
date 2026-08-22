@@ -1,16 +1,16 @@
 # Tests pass with python 3.15 on 2026-08-22 and with these versions
 # pip install --no-deps -r tests/requirements-3.15.lock
 hjson==3.1.0
-mo-dots==10.687.26234
+mo-dots==10.688.26234
 mo-files==6.672.25036
-mo-future==7.686.26234
-mo-imports==7.686.26234
+mo-future==7.687.26234
+mo-imports==7.687.26234
 mo-json==6.672.25036
 mo-kwargs==7.672.25036
 mo-logs==8.672.25036
 mo-math==7.672.25036
-mo-parsing==9.2.26234
-mo-sql-parsing==11.697.25301
+mo-parsing==9.3.26234
+mo-sql-parsing==11.698.26234
 mo-streams==1.673.25037
 mo-testing==8.674.25037
 mo-threads==6.672.25036
