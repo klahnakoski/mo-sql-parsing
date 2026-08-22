@@ -18,12 +18,6 @@ unskipping means deciding the parse tree shape as well as writing the grammar.
 - **BigQuery `UNNEST` without `FROM`** — `tests/test_bigquery.py:446` `test_issue_98_interval2`.
   Skip note asks "missing FROM?" — decide whether that SQL is even legal before writing the rule.
 
-## Quick win
-
-- **`EXPLAIN SELECT * FROM x` already parses.** `tests/test_sqlglot.py:833`
-  `test_issue_46_sqlglot_90` is still skipped with `expected = {}`. Replace it with
-  `{"explain": {"select": {"all_columns": {}}, "from": "x"}}` and drop the `@skip`.
-
 ## Error messages
 
 - **`select c1, c as 't' from T` reports the wrong error** — `tests/test_errors.py:78`

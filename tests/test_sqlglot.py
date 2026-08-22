@@ -830,11 +830,10 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_90(self):
         sql = """EXPLAIN SELECT * FROM x"""
         result = parse(sql)
-        expected = {}
+        expected = {"explain": {"select": {"all_columns": {}}, "from": "x"}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_91(self):
