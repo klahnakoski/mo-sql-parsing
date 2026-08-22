@@ -6,7 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-import re
 from threading import Lock
 
 parse_locker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
@@ -153,10 +152,10 @@ def normal_op(op, args, kwargs):
     return from_data(output)
 
 
-delimiter_pattern = re.compile(r"^\s*delimiter\s+([^\n]+)$", re.IGNORECASE | re.MULTILINE)
-
-
 def parse_delimiters(sql, ignore=";"):
+    import re
+
+    delimiter_pattern = re.compile(r"^\s*delimiter\s+([^\n]+)$", re.IGNORECASE | re.MULTILINE)
     delimiter = ";"
     ender = r"\s*(\n|$)"
     splitter = re.compile(re.escape(delimiter) + ender)
